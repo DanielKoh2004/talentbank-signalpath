@@ -1,0 +1,365 @@
+// ─────────────────────────────────────────────────────────
+// SignalPath Career OS — Prisma Schema (SQLite)
+// ─────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────── 1. User ─────────────
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String   // candidate | employer | university_admin
+  createdAt DateTime @default(now())
+
+  candidateProfile CandidateProfile?
+
+  @@index([role])
+}
+
+// ───────────── 2. CandidateProfile ─────────────
+model CandidateProfile {
+  id                   String  @id @default(cuid())
+  userId               String  @unique
+  location             String?
+  educationLevel       String?
+  institution          String?
+  targetLocations      String? // JSON string array
+  preferredRoles       String? // JSON string array
+  salaryExpectationMin Int?
+  salaryExpectationMax Int?
+  visibilityStatus     String  @default("private")
+
+  user User @relation(fields: [userId], references: [id])
+
+  artifacts                  Artifact[]
+  extractionJobs             ExtractionJob[]
+  evidenceClaims             EvidenceClaim[]
+  opportunityInteractions    OpportunityInteraction[]
+  matchScores                MatchScore[]
+  candidateRetentionConsents CandidateRetentionConsent[]
+  rejectedCandidateContexts  RejectedCandidateContext[]
+  reEngagementEvents         ReEngagementEvent[]
+
+  @@index([visibilityStatus])
+}
+
+// ───────────── 3. Artifact ─────────────
+model Artifact {
+  id               String   @id @default(cuid())
+  candidateId      String
+  title            String
+  type             String   // cv | project | certificate | repo_link | portfolio_link | case_study | screenshot | other
+  sourceUrl        String?
+  storagePath      String?
+  extractedText    String?
+  extractionSource String?  // manifest | native_text | pasted_summary | manual_entry | failed
+  demoManifestId   String?
+  uploadedAt       DateTime @default(now())
+  shareable        Boolean  @default(false)
+
+  candidate      CandidateProfile @relation(fields: [candidateId], references: [id])
+  extractionJobs ExtractionJob[]
+  evidenceClaims EvidenceClaim[]
+
+  @@index([candidateId])
+  @@index([type])
+  @@index([demoManifestId])
+}
+
+// ───────────── 4. ExtractionJob ─────────────
+model ExtractionJob {
+  id                String    @id @default(cuid())
+  artifactId        String
+  candidateId       String
+  status            String    @default("queued") // queued | processing | needs_input | completed | failed
+  extractionSource  String?   // manifest | native_text | pasted_summary | manual_entry | failed
+  progressLabel     String?
+  errorMessage      String?
+  createdClaimCount Int       @default(0)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+
+  artifact  Artifact         @relation(fields: [artifactId], references: [id])
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+
+  @@index([candidateId])
+  @@index([artifactId])
+  @@index([status])
+}
+
+// ───────────── 5. EvidenceClaim ─────────────
+model EvidenceClaim {
+  id                 String    @id @default(cuid())
+  candidateId        String
+  artifactId         String
+  claimText          String
+  normalizedSkillIds String    // JSON string array of canonical skill IDs
+  suggestedSkillNames String?  // JSON string array
+  roleFamilyTags     String?   // JSON string array
+  provenanceStatus   String    // repo_backed | artifact_backed | document_backed | reviewer_confirmed | self_claimed | unmapped
+  evidenceQualityScore Int     @default(0) // 0-5
+  sourceSpan         String?   // quote from artifact
+  confidence         Float     @default(0.5)
+  candidateStatus    String    @default("pending") // pending | accepted | edited | rejected
+  visibility         String    @default("private") // private | shareable_summary | shareable_artifact
+  createdAt          DateTime  @default(now())
+  lastVerifiedAt     DateTime?
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+  artifact  Artifact         @relation(fields: [artifactId], references: [id])
+
+  @@index([candidateId])
+  @@index([artifactId])
+  @@index([provenanceStatus])
+  @@index([candidateStatus])
+}
+
+// ───────────── 6. Skill ─────────────
+model Skill {
+  id            String  @id // slug like "sql", "data_visualization"
+  name          String
+  category      String  // Data | Product | Communication | Technical | Business | Security | Operations
+  aliases       String? // JSON string array
+  parentSkillId String? // self-relation
+  level         String  // category | family | specific
+  active        Boolean @default(true)
+
+  parentSkill  Skill?  @relation("SkillHierarchy", fields: [parentSkillId], references: [id])
+  childSkills  Skill[] @relation("SkillHierarchy")
+
+  sourceRelations SkillRelation[] @relation("SourceSkill")
+  targetRelations SkillRelation[] @relation("TargetSkill")
+
+  roleRequirements RoleRequirement[]
+  cohortAggregates CohortAggregate[]
+
+  @@index([category])
+  @@index([parentSkillId])
+}
+
+// ───────────── 7. SkillRelation ─────────────
+model SkillRelation {
+  id            String @id @default(cuid())
+  sourceSkillId String
+  targetSkillId String
+  relationType  String // parent | child | adjacent | prerequisite
+  scoringWeight Float  @default(1.0)
+
+  sourceSkill Skill @relation("SourceSkill", fields: [sourceSkillId], references: [id])
+  targetSkill Skill @relation("TargetSkill", fields: [targetSkillId], references: [id])
+
+  @@unique([sourceSkillId, targetSkillId, relationType])
+  @@index([sourceSkillId])
+  @@index([targetSkillId])
+}
+
+// ───────────── 8. RoleFamily ─────────────
+model RoleFamily {
+  id           String  @id @default(cuid())
+  name         String
+  description  String?
+  commonSkills String? // JSON string array of skill IDs
+
+  roleBriefs       RoleBrief[]
+  cohortAggregates CohortAggregate[]
+  retentionConsents CandidateRetentionConsent[]
+}
+
+// ───────────── 9. RoleBrief ─────────────
+model RoleBrief {
+  id             String   @id @default(cuid())
+  employerId     String
+  title          String
+  roleFamilyId   String?
+  location       String?
+  workMode       String?  // remote | hybrid | onsite
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String   @default("MYR")
+  salarySource   String?  // employer_provided | seeded_estimate | public_estimate
+  description    String?
+  status         String   @default("active") // active | draft | closed
+  createdAt      DateTime @default(now())
+
+  roleFamily              RoleFamily?              @relation(fields: [roleFamilyId], references: [id])
+  roleRequirements        RoleRequirement[]
+  opportunityInteractions OpportunityInteraction[]
+  matchScores             MatchScore[]
+  rejectedCandidateContexts RejectedCandidateContext[]
+  reEngagementEvents      ReEngagementEvent[]
+
+  @@index([employerId])
+  @@index([roleFamilyId])
+  @@index([status])
+}
+
+// ───────────── 10. RoleRequirement ─────────────
+model RoleRequirement {
+  id                      String @id @default(cuid())
+  roleBriefId             String
+  skillId                 String
+  importance              String // required | nice_to_have
+  minimumEvidenceStrength Int    @default(1)
+  displayLabel            String?
+
+  roleBrief RoleBrief @relation(fields: [roleBriefId], references: [id])
+  skill     Skill     @relation(fields: [skillId], references: [id])
+
+  @@unique([roleBriefId, skillId])
+  @@index([roleBriefId])
+  @@index([skillId])
+}
+
+// ───────────── 11. OpportunityInteraction ─────────────
+model OpportunityInteraction {
+  id                 String   @id @default(cuid())
+  roleBriefId        String
+  candidateId        String
+  candidateStatus    String   @default("viewed") // viewed | interested | hidden | applied
+  employerStatus     String   @default("not_reviewed") // not_reviewed | shortlisted | contacted | rejected
+  lastReadinessScore Float?
+  lastGapCount       Int?
+  updatedAt          DateTime @updatedAt
+
+  roleBrief RoleBrief        @relation(fields: [roleBriefId], references: [id])
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+
+  @@unique([roleBriefId, candidateId])
+  @@index([candidateId])
+  @@index([roleBriefId])
+}
+
+// ───────────── 12. MatchScore ─────────────
+model MatchScore {
+  id                   String   @id @default(cuid())
+  roleBriefId          String
+  candidateId          String
+  totalScore           Float
+  roleEvidenceCoverage Float
+  trajectoryFit        Float
+  adjacentExperience   Float
+  logisticsFit         Float
+  growthSignal         Float
+  preferenceAlignment  Float
+  evidenceQuality      Float
+  matrixJson           String?  // JSON: full evidence matrix for audit
+  aiMemo               String?
+  computedAt           DateTime @default(now())
+
+  roleBrief RoleBrief        @relation(fields: [roleBriefId], references: [id])
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+
+  @@unique([roleBriefId, candidateId])
+  @@index([candidateId])
+  @@index([roleBriefId])
+  @@index([totalScore])
+}
+
+// ───────────── 13. CandidateRetentionConsent ─────────────
+model CandidateRetentionConsent {
+  id            String    @id @default(cuid())
+  candidateId   String
+  employerId    String?
+  roleFamilyId  String?
+  consentStatus String    @default("active") // active | revoked | expired
+  scope         String    // role_only | employer_only | marketplace
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  revokedAt     DateTime?
+
+  candidate  CandidateProfile @relation(fields: [candidateId], references: [id])
+  roleFamily RoleFamily?      @relation(fields: [roleFamilyId], references: [id])
+
+  @@index([candidateId])
+  @@index([consentStatus])
+}
+
+// ───────────── 14. RejectedCandidateContext ─────────────
+model RejectedCandidateContext {
+  id               String   @id @default(cuid())
+  candidateId      String
+  roleBriefId      String
+  rejectionReason  String?
+  missingSkills    String?  // JSON string array
+  scoreAtRejection Float?
+  baselineScore    Int?
+  baselineMissingSkillIds String?
+  baselineMatrixJson String?
+  rejectedAt       DateTime @default(now())
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+  roleBrief RoleBrief        @relation(fields: [roleBriefId], references: [id])
+
+  @@unique([candidateId, roleBriefId])
+  @@index([candidateId])
+  @@index([roleBriefId])
+}
+
+// ───────────── 15. ReEngagementEvent ─────────────
+model ReEngagementEvent {
+  id               String    @id @default(cuid())
+  candidateId      String
+  roleBriefId      String
+  previousScore    Float
+  currentScore     Float
+  deltaExplanation String?
+  deltaSummaryJson String?
+  triggerType      String    // new_evidence | requirement_change
+  status           String    @default("pending") // pending | reviewed | contacted | dismissed
+  draftMessage     String?
+  createdAt        DateTime  @default(now())
+  reviewedAt       DateTime?
+
+  candidate CandidateProfile @relation(fields: [candidateId], references: [id])
+  roleBrief RoleBrief        @relation(fields: [roleBriefId], references: [id])
+
+  @@index([candidateId])
+  @@index([roleBriefId])
+  @@index([status])
+}
+
+// ───────────── 16. UniversityCohort ─────────────
+model UniversityCohort {
+  id             String   @id @default(cuid())
+  universityName String
+  facultyName    String
+  programName    String
+  year           Int
+  studentCount   Int
+  createdAt      DateTime @default(now())
+
+  cohortAggregates CohortAggregate[]
+
+  @@index([universityName])
+}
+
+// ───────────── 17. CohortAggregate ─────────────
+model CohortAggregate {
+  id           String   @id @default(cuid())
+  cohortId     String
+  roleFamilyId String?
+  skillId      String?
+  metricType   String   // readiness_distribution | missing_skill | evidence_coverage | internship_readiness
+  metricValue  Float
+  metricLabel  String
+  denominator  Int      // total students in this aggregate
+  computedAt   DateTime @default(now())
+
+  cohort     UniversityCohort @relation(fields: [cohortId], references: [id])
+  roleFamily RoleFamily?      @relation(fields: [roleFamilyId], references: [id])
+  skill      Skill?           @relation(fields: [skillId], references: [id])
+
+  @@index([cohortId])
+  @@index([roleFamilyId])
+  @@index([skillId])
+  @@index([metricType])
+}
