@@ -62,7 +62,7 @@ export async function POST(
   // Dynamic import to avoid circular deps during build
   try {
     const { runExtraction } = await import("@/lib/extraction/extractor");
-    const result = await runExtraction(jobId);
+    const result = await runExtraction(jobId, { allowAI: false });
 
     return NextResponse.json({
       success: result.success,

@@ -1,36 +1,275 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SignalPath
 
-## Getting Started
+**Proof over prediction for the next generation of career navigation.**
 
-First, run the development server:
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
+SignalPath turns messy career evidence into a living, auditable career graph that candidates own, employers can trust, and universities can use to understand readiness gaps.
+
+## The Problem & Our Solution
+
+AI in hiring often becomes a black box: candidates are reduced to opaque fit scores, employers are asked to trust unexplained recommendations, and universities rarely see which skills their graduates can actually prove.
+
+SignalPath takes a different position: **AI should not predict a person’s future. It should organize evidence, expose uncertainty, and make decisions auditable.**
+
+Instead of generating unverifiable match scores, SignalPath builds an evidence graph from candidate artifacts such as project writeups, certificates, case studies, and repositories. Each claim is connected to:
+
+- the source artifact,
+- the extracted claim,
+- the mapped canonical skill,
+- the evidence quality score,
+- the downstream role requirement it supports.
+
+This creates a shared Career OS where:
+
+- **Candidates** build a living portfolio with proof-backed CV claims.
+- **Employers** evaluate candidates through an auditable match matrix.
+- **Universities** see aggregate readiness gaps without exposing individual student data.
+
+## Key Modules
+
+### Living Portfolio
+
+Candidates upload career artifacts and review extracted evidence claims before they become part of their profile. The portfolio behaves like a CV that updates from proof, not memory.
+
+Key features:
+
+- artifact upload and extraction jobs,
+- claim review and acceptance,
+- taxonomy-constrained skill mapping,
+- evidence quality scoring,
+- proof-linked Living CV.
+
+### Career Marketplace
+
+The marketplace connects both sides of the Career OS. Candidates discover roles and see their readiness against each requirement, while employers see interested and near-ready candidates.
+
+Key features:
+
+- candidate opportunity board,
+- employer role workspace,
+- shared readiness matrix,
+- consent-aware candidate visibility.
+
+### Smart Talent Matching
+
+SignalPath does not return a mysterious AI ranking. It computes a deterministic match score and exposes the requirement-by-requirement evidence behind it.
+
+Key features:
+
+- deterministic scoring engine,
+- skill taxonomy relation handling,
+- evidence matrix,
+- score breakdown,
+- AI memo generated only from visible evidence rows.
+
+### Talent Re-Engagement
+
+Rejected candidates are not lost forever. When a candidate improves their evidence, SignalPath compares the live score against the stored rejection snapshot and surfaces the delta.
+
+Key features:
+
+- rejection baseline snapshot,
+- precomputed JSON delta summary,
+- threshold-based re-engagement,
+- HR-reviewed outreach drafts.
+
+### Adaptive Readiness Profile
+
+Universities get an aggregate-only dashboard showing cohort readiness gaps. This helps institutions understand where curriculum and evidence-building opportunities are misaligned with market demand.
+
+Key features:
+
+- cohort readiness by role family,
+- top missing evidence-backed skills,
+- curriculum gap cards,
+- marketplace demand signals,
+- no individual student exposure.
+
+## How It Works
+
+```text
+Candidate uploads artifact
+        |
+        v
+Extraction job creates structured evidence claims
+        |
+        v
+Candidate reviews and accepts claims
+        |
+        v
+Accepted claims become a living career evidence graph
+        |
+        v
+Employer role requirements are matched against visible evidence
+        |
+        v
+Deterministic score + auditable evidence matrix + AI memo
+        |
+        v
+Re-engagement engine tracks score improvement after rejection
+        |
+        v
+University dashboard receives aggregate readiness signals
+```
+
+The loop is deliberately designed around **auditable evidence**, not unverifiable prediction.
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | Next.js App Router, React, TypeScript |
+| Styling | Tailwind CSS, shadcn/ui |
+| Charts | Recharts |
+| Backend | Next.js API Routes |
+| ORM | Prisma |
+| Database | SQLite for local development, PostgreSQL-ready for production |
+| AI Layer | Vercel AI SDK, Xiaomi MiMo v2 Pro via OpenAI-compatible API |
+| State Management | TanStack Query for bounded async polling |
+| Deployment Target | Vercel |
+
+## Local Development
+
+### 1. Clone the repository
+
+```bash
+git clone <repository-url>
+cd CareerOS
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then update `.env` with your local database URL and optional AI provider credentials.
+
+### 4. Push the Prisma schema
+
+```bash
+npx prisma db push
+```
+
+### 5. Seed the demo data
+
+```bash
+npx prisma db seed
+```
+
+This creates the built-in Aisha/DataCo/UM demo scenario.
+
+### 6. Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Useful Scripts
 
-## Learn More
+```bash
+npm run dev        # Start local development server
+npm run build      # Build production bundle
+npm run lint       # Run ESLint
+npx tsc --noEmit   # Type-check the project
+npx prisma studio  # Inspect local database
+```
 
-To learn more about Next.js, take a look at the following resources:
+## The Demo Narrative
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+SignalPath includes a complete seeded demo scenario:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Aisha Razak**, a UM graduate, has a portfolio with accepted evidence claims.
+2. **DataCo** is hiring for a Junior Product Analyst role.
+3. Aisha is initially not ready because she lacks strong experimentation and product analytics evidence.
+4. The employer sees this through an auditable evidence matrix, not a black-box score.
+5. Aisha later adds an A/B testing project.
+6. The re-engagement engine compares her live score against the stored rejection baseline and surfaces the improvement.
+7. The university dashboard shows the same issue at cohort scale: **0% of the 2025 cohort have artifact-backed experimentation evidence, while 61% of Product Analytics role briefs require it.**
 
-## Deploy on Vercel
+This demonstrates the full Career OS loop:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+candidate evidence -> employer decision -> re-engagement signal -> university readiness gap
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Demo Control
+
+Visit:
+
+```text
+http://localhost:3000/demo-control
+```
+
+The Demo Control page provides:
+
+- health checks for known seeded rows,
+- direct launch buttons for each demo scene,
+- a bounded “Restore Demo Scenario” action,
+- debug IDs and key scores.
+
+For safety, the app does **not** run a full database reset from an HTTP route. Full reseeding should be done locally with:
+
+```bash
+npx prisma db seed
+```
+
+The in-app restore action only repairs known scenario rows, which avoids Vercel serverless timeout risk during a live demo.
+
+## Demo Routes
+
+| Route | Purpose |
+| --- | --- |
+| `/portfolio` | Candidate Living Portfolio |
+| `/marketplace` | Candidate marketplace |
+| `/roles/rb_junior_product_analyst` | Employer match matrix |
+| `/re-engagement` | Employer re-engagement dashboard |
+| `/readiness` | University readiness dashboard |
+| `/demo-control` | Demo health and recovery panel |
+
+## Design Principles
+
+- **Proof over prediction:** recommendations must be grounded in visible evidence.
+- **Auditable AI:** AI explains from the matrix; it does not invent the matrix.
+- **Candidate agency:** candidates review claims before they become part of their profile.
+- **Employer trust:** every match score can be inspected requirement by requirement.
+- **Institutional privacy:** universities receive aggregate signals, never individual surveillance.
+
+## Production Notes
+
+The local build uses SQLite for speed and portability. The Prisma schema is designed to migrate to PostgreSQL for production.
+
+For deployment, avoid doing heavy work inside serverless request paths:
+
+- do not run database seed/reset from API routes,
+- do not process PDFs inside upload requests,
+- do not require LLM extraction for the demo path,
+- use precomputed aggregates for university dashboards,
+- use manifest-backed demo artifacts for stable presentations.
+
+## License
+
+MIT

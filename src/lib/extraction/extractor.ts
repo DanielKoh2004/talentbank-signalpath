@@ -31,6 +31,7 @@ import {
  */
 export async function runExtraction(
   jobId: string,
+  options: { allowAI?: boolean } = {},
 ): Promise<{ success: boolean; claimCount: number; error?: string }> {
   try {
     // ── 1. Load job + artifact ──────────────────────────────────────────
@@ -92,7 +93,9 @@ export async function runExtraction(
 
     // ── 4. Try local + AI extraction if extractedText exists ─────────────
     if (artifact.extractedText && artifact.extractedText.trim().length > 0) {
-      const hasAIKey = !!(process.env.AI_API_KEY && process.env.AI_BASE_URL);
+      const hasAIKey =
+        options.allowAI === true &&
+        !!(process.env.AI_API_KEY && process.env.AI_BASE_URL);
 
       let claimCount: number;
       let source: string;
