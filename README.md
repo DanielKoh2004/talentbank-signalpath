@@ -126,7 +126,7 @@ The loop is deliberately designed around **auditable evidence**, not unverifiabl
 | Charts | Recharts |
 | Backend | Next.js API Routes |
 | ORM | Prisma |
-| Database | SQLite for local development, PostgreSQL-ready for production |
+| Database | PostgreSQL via Neon |
 | AI Layer | Vercel AI SDK, Xiaomi MiMo v2 Pro via OpenAI-compatible API |
 | State Management | TanStack Query for bounded async polling |
 | Deployment Target | Vercel |
@@ -160,7 +160,7 @@ On Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-Then update `.env` with your local database URL and optional AI provider credentials.
+Then update `.env` with your Neon `DATABASE_URL` and optional AI provider credentials.
 
 ### 4. Push the Prisma schema
 
@@ -194,8 +194,62 @@ http://localhost:3000
 npm run dev        # Start local development server
 npm run build      # Build production bundle
 npm run lint       # Run ESLint
+npm run db:deploy  # Push schema and seed demo data
 npx tsc --noEmit   # Type-check the project
 npx prisma studio  # Inspect local database
+```
+
+## Deploying on Vercel with Neon
+
+SignalPath uses a real PostgreSQL database in production. The deployed app will not work with the local SQLite-style `file:./dev.db` URL.
+
+### 1. Create a Neon database
+
+Create a Neon project and copy the pooled connection string. It should look like:
+
+```text
+postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
+```
+
+### 2. Add Vercel environment variables
+
+In Vercel Project Settings -> Environment Variables, add:
+
+```text
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require
+NEXT_PUBLIC_APP_URL=https://your-vercel-domain.vercel.app
+AI_API_KEY=...
+AI_BASE_URL=...
+AI_MODEL=...
+```
+
+The AI variables are optional for the stable demo path, but required if you want live AI memo or extraction behavior.
+
+### 3. Push and seed the Neon database
+
+Run this locally with the same Neon `DATABASE_URL` in your `.env`:
+
+```bash
+npm run db:deploy
+```
+
+This runs:
+
+```bash
+npx prisma db push
+npx prisma db seed
+```
+
+### 4. Redeploy Vercel
+
+After Neon has the schema and seed data, redeploy the app. The following API routes should return data:
+
+```text
+/api/roles
+/api/paths?candidateId=profile_aisha
+/api/re-engagement?employerId=user_dataco_hr
+/api/university
+/api/demo
 ```
 
 ## The Demo Narrative
@@ -231,10 +285,10 @@ The Demo Control page provides:
 - a bounded “Restore Demo Scenario” action,
 - debug IDs and key scores.
 
-For safety, the app does **not** run a full database reset from an HTTP route. Full reseeding should be done locally with:
+For safety, the app does **not** run a full database reset from an HTTP route. Full reseeding should be done locally against Neon with:
 
 ```bash
-npx prisma db seed
+npm run db:deploy
 ```
 
 The in-app restore action only repairs known scenario rows, which avoids Vercel serverless timeout risk during a live demo.
@@ -260,7 +314,7 @@ The in-app restore action only repairs known scenario rows, which avoids Vercel 
 
 ## Production Notes
 
-The local build uses SQLite for speed and portability. The Prisma schema is designed to migrate to PostgreSQL for production.
+The app is configured for PostgreSQL through Neon. If API routes fail on Vercel, first check that `DATABASE_URL` is set in Vercel and that `npm run db:deploy` has been run against the same Neon database.
 
 For deployment, avoid doing heavy work inside serverless request paths:
 

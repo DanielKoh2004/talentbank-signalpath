@@ -63,8 +63,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ roles: formatted });
   } catch (error) {
     console.error("Failed to fetch roles:", error);
+    const details =
+      process.env.NODE_ENV === "production"
+        ? undefined
+        : error instanceof Error
+          ? error.message
+          : String(error);
     return NextResponse.json(
-      { error: "Failed to fetch roles" },
+      { error: "Failed to fetch roles", details },
       { status: 500 }
     );
   }
