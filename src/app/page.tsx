@@ -104,10 +104,10 @@ export default function HomePage() {
             <a href="#loop">How it works</a>
           </nav>
           <Link
-            href="/demo-control"
+            href="/portfolio"
             className={cn(buttonVariants(), "bg-[#ec006d] hover:bg-[#d10062]")}
           >
-            Launch Demo Control
+            Try Candidate Demo
           </Link>
         </div>
       </header>
@@ -263,21 +263,21 @@ export default function HomePage() {
                   Demo-ready with seeded evidence, roles, and readiness gaps
                 </div>
                 <h2 className="mt-3 text-3xl font-black">
-                  Walk the Aisha story from rejection to re-engagement.
+                  Walk the Aisha story from proof to trusted match.
                 </h2>
                 <p className="mt-3 max-w-2xl text-blue-100">
-                  Restore the scenario, upload proof, compute matches, reconnect
-                  after improvement, then show the university-level gap.
+                  Upload proof, compute matches, reconnect after improvement,
+                  then show the university-level gap.
                 </p>
               </div>
               <Link
-                href="/demo-control"
+                href="/portfolio"
                 className={cn(
                   buttonVariants({ size: "lg" }),
                   "bg-[#ec006d] font-black hover:bg-[#d10062]"
                 )}
               >
-                Launch Demo Control
+                Start Candidate Demo
               </Link>
             </div>
           </div>

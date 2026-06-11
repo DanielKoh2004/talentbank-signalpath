@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
 import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { PersonaSwitcher } from "@/components/shared/PersonaSwitcher";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,17 +15,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
+  ArrowLeft,
   ArrowRight,
+  BarChart3,
   Briefcase,
   CheckCircle2,
   Compass,
   Database,
   GraduationCap,
   Loader2,
+  MonitorCog,
   RefreshCw,
   ShieldCheck,
   Sparkles,
@@ -59,36 +62,32 @@ interface DemoHealth {
 
 const SCENE_LINKS = [
   {
-    title: "Aisha Portfolio",
-    detail: "Candidate evidence and Living CV",
+    title: "Candidate Story",
+    detail: "Open Aisha's proof-backed Living Portfolio",
     href: "/portfolio",
     personaId: "user_aisha",
     icon: User,
-    color: "indigo",
   },
   {
-    title: "DataCo Match Matrix",
-    detail: "Deterministic employer scoring",
+    title: "Employer Match",
+    detail: "Review DataCo's auditable match matrix",
     href: "/roles/rb_junior_product_analyst",
     personaId: "user_dataco_hr",
     icon: Briefcase,
-    color: "emerald",
   },
   {
-    title: "Re-Engagement Delta",
-    detail: "62% baseline to live score",
+    title: "Ready to Reconnect",
+    detail: "Show the baseline-to-live score delta",
     href: "/re-engagement",
     personaId: "user_dataco_hr",
     icon: Sparkles,
-    color: "blue",
   },
   {
-    title: "UM Experimentation Gap",
-    detail: "0% evidence, 61% demand",
+    title: "University Gap",
+    detail: "Reveal the experimentation gap at cohort level",
     href: "/readiness",
     personaId: "user_um_admin",
     icon: GraduationCap,
-    color: "amber",
   },
 ];
 
@@ -170,34 +169,149 @@ export default function DemoControlPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 shadow-sm">
-                <Compass className="h-5 w-5 text-white" />
-              </div>
+    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#071f5c] text-white shadow-sm">
+              <Compass className="h-4.5 w-4.5" />
+            </span>
+            <span className="leading-none">
+              <span className="block text-lg font-black tracking-tight">
+                SignalPath
+              </span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Demo Control
+              </span>
+            </span>
+          </Link>
+          <Badge className="hidden rounded-full bg-[#071f5c]/10 px-3 py-1 text-[#071f5c] hover:bg-[#071f5c]/10 dark:bg-blue-300/10 dark:text-blue-200 sm:inline-flex">
+            Operator-only stage panel
+          </Badge>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/portfolio"
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to App
             </Link>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                Demo Stability Control
+            <PersonaSwitcher />
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[1.4rem] bg-[#071f5c] text-white shadow-sm">
+          <div className="relative grid gap-6 p-6 lg:grid-cols-[1fr_360px] lg:items-center">
+            <div className="pointer-events-none absolute -left-14 -top-24 h-64 w-64 rounded-full bg-[#123a8c]/70" />
+            <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#0d2b75]/80" />
+            <div className="relative">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-blue-50">
+                <MonitorCog className="h-4 w-4 text-[#ec006d]" />
+                Backstage controls for the live presentation
+              </div>
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+                Demo Control
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Bounded recovery tools for the live SignalPath demo
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
+                Restore the known Aisha/DataCo/UM scenario, check demo health,
+                and jump to exact scenes. This is intentionally separated from
+                the public home page.
               </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {repairing ? (
+                  <DisabledTooltipButton
+                    className="h-10 gap-2 bg-[#ec006d] px-4 text-white"
+                    disabledReason="Demo repair is already running."
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Restore Demo Scenario
+                  </DisabledTooltipButton>
+                ) : (
+                  <Button
+                    onClick={repair}
+                    className="h-10 gap-2 bg-[#ec006d] px-4 font-black hover:bg-[#d10062]"
+                  >
+                    <Wrench className="h-4 w-4" />
+                    Restore Demo Scenario
+                  </Button>
+                )}
+                {loading || repairing ? (
+                  <DisabledTooltipButton
+                    variant="outline"
+                    className="h-10 gap-2 border-white/50 bg-transparent px-4 text-white"
+                    disabledReason={
+                      loading
+                        ? "Demo health checks are already loading."
+                        : "Wait for demo repair to finish before refreshing."
+                    }
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh Checks
+                  </DisabledTooltipButton>
+                ) : (
+                  <Button
+                    onClick={refresh}
+                    variant="outline"
+                    className="h-10 gap-2 border-white/50 bg-transparent px-4 text-white hover:bg-white hover:text-[#071f5c]"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh Checks
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="relative rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-blue-100">
+                  Scenario status
+                </span>
+                <Badge
+                  className={cn(
+                    "rounded-full",
+                    health?.status === "ready"
+                      ? "bg-emerald-400 text-emerald-950 hover:bg-emerald-400"
+                      : "bg-amber-300 text-amber-950 hover:bg-amber-300"
+                  )}
+                >
+                  {loading
+                    ? "Checking"
+                    : health?.status === "ready"
+                      ? "Ready"
+                      : "Needs repair"}
+                </Badge>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <HeroMetric
+                  label="Baseline"
+                  value={formatScore(health?.snapshot.scores.baselineScore)}
+                />
+                <HeroMetric
+                  label="Live score"
+                  value={formatScore(health?.snapshot.scores.reEngagementLiveScore)}
+                />
+                <HeroMetric
+                  label="Aggregates"
+                  value={String(health?.snapshot.aggregateCount ?? "--")}
+                />
+                <HeroMetric
+                  label="Issues"
+                  value={loading ? "--" : String(failedChecks.length)}
+                />
+              </div>
             </div>
           </div>
-          <PersonaSwitcher />
-        </div>
+        </section>
 
         {(message || error) && (
           <div
             className={cn(
-              "flex items-center gap-2 rounded-lg px-4 py-3 text-sm",
+              "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm",
               error
-                ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300"
-                : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
+                ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300",
             )}
           >
             {error ? (
@@ -209,17 +323,13 @@ export default function DemoControlPage() {
           </div>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StatusCard
             label="Demo Health"
             value={
               loading ? "Checking" : health?.status === "ready" ? "Ready" : "Repair"
             }
-            detail={
-              loading
-                ? "Loading known-row checks"
-                : `${failedChecks.length} failing check${failedChecks.length === 1 ? "" : "s"}`
-            }
+            detail={`${failedChecks.length} failing check${failedChecks.length === 1 ? "" : "s"}`}
             icon={ShieldCheck}
             tone={health?.status === "ready" ? "emerald" : "amber"}
           />
@@ -231,39 +341,36 @@ export default function DemoControlPage() {
             tone="blue"
           />
           <StatusCard
-            label="Baseline"
-            value={
-              health?.snapshot.scores.baselineScore != null
-                ? `${health.snapshot.scores.baselineScore}%`
-                : "N/A"
-            }
-            detail="Rejected snapshot"
+            label="Stored Snapshot"
+            value={formatScore(health?.snapshot.scores.baselineScore)}
+            detail="Rejected candidate baseline"
             icon={Database}
-            tone="amber"
+            tone="navy"
           />
           <StatusCard
             label="UM Aggregates"
             value={health ? health.snapshot.aggregateCount.toString() : "N/A"}
-            detail="Precomputed rows"
-            icon={GraduationCap}
-            tone="emerald"
+            detail="Precomputed dashboard rows"
+            icon={BarChart3}
+            tone="pink"
           />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <Card>
+          <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <ShieldCheck className="h-4 w-4" />
+                <ShieldCheck className="h-4 w-4 text-[#071f5c] dark:text-blue-200" />
                 Demo Health Checklist
               </CardTitle>
               <CardDescription>
-                Uses known seeded IDs and small reads. No full database reset or broad scans.
+                Known seeded IDs and small reads only. No broad reset or database
+                rebuild happens from this page.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {loading && !health ? (
-                <div className="flex items-center gap-2 py-8 text-sm text-gray-500">
+                <div className="flex items-center gap-2 py-8 text-sm text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Checking demo state...
                 </div>
@@ -274,56 +381,13 @@ export default function DemoControlPage() {
                   ))}
                 </div>
               )}
-
-              <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
-                {repairing ? (
-                  <DisabledTooltipButton
-                    className="gap-1.5"
-                    disabledReason="Demo repair is already running."
-                  >
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Restore Demo Scenario
-                  </DisabledTooltipButton>
-                ) : (
-                  <Button onClick={repair} className="gap-1.5">
-                    <Wrench className="h-3.5 w-3.5" />
-                    Restore Demo Scenario
-                  </Button>
-                )}
-                {loading || repairing ? (
-                  <DisabledTooltipButton
-                    variant="outline"
-                    className="gap-1.5"
-                    disabledReason={
-                      loading
-                        ? "Demo health checks are already loading."
-                        : "Wait for demo repair to finish before refreshing."
-                    }
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Refresh Checks
-                  </DisabledTooltipButton>
-                ) : (
-                  <Button
-                    onClick={refresh}
-                    variant="outline"
-                    className="gap-1.5"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Refresh Checks
-                  </Button>
-                )}
-                <p className="text-xs text-gray-400">
-                  Repair only patches known rows; run local seed before the demo if base rows are missing.
-                </p>
-              </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 text-[#071f5c] dark:text-blue-200" />
                 Launch Exact Scenes
               </CardTitle>
               <CardDescription>
@@ -342,10 +406,10 @@ export default function DemoControlPage() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Database className="h-4 w-4" />
+              <Database className="h-4 w-4 text-[#071f5c] dark:text-blue-200" />
               Debug Snapshot
             </CardTitle>
             <CardDescription>
@@ -387,13 +451,24 @@ export default function DemoControlPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }
 
 function formatScore(score: number | null | undefined) {
   return score == null ? "N/A" : `${score}%`;
+}
+
+function HeroMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-white/10 p-3">
+      <p className="text-2xl font-black tabular-nums text-white">{value}</p>
+      <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.16em] text-blue-100">
+        {label}
+      </p>
+    </div>
+  );
 }
 
 function StatusCard({
@@ -407,28 +482,32 @@ function StatusCard({
   value: string;
   detail: string;
   icon: React.ElementType;
-  tone: "amber" | "emerald" | "blue";
+  tone: "amber" | "emerald" | "blue" | "navy" | "pink";
 }) {
   const color = {
     amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    navy: "bg-[#071f5c]/10 text-[#071f5c] dark:bg-blue-300/10 dark:text-blue-200",
+    pink: "bg-[#ec006d]/10 text-[#ec006d] dark:bg-pink-300/10 dark:text-pink-200",
   }[tone];
 
   return (
-    <Card>
+    <Card className="border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
       <CardContent className="flex items-center gap-3 p-4">
-        <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", color)}>
+        <div className={cn("flex h-10 w-10 items-center justify-center rounded-full", color)}>
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-lg font-bold text-gray-900 dark:text-gray-100">
+          <p className="truncate text-lg font-black text-slate-950 dark:text-white">
             {value}
           </p>
-          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
             {label}
           </p>
-          <p className="truncate text-[10px] text-gray-400">{detail}</p>
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+            {detail}
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -437,24 +516,26 @@ function StatusCard({
 
 function DemoCheckRow({ check }: { check: DemoCheck }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-gray-100 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+    <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
       {check.ok ? (
         <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500" />
       ) : (
         <XCircle className="mt-0.5 h-4 w-4 text-red-500" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+        <p className="text-sm font-semibold text-slate-900 dark:text-white">
           {check.label}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{check.detail}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {check.detail}
+        </p>
       </div>
       <Badge
         className={cn(
-          "text-[10px]",
+          "rounded-full text-[10px]",
           check.ok
-            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-            : "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300",
+            ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-300"
+            : "bg-red-50 text-red-700 hover:bg-red-50 dark:bg-red-950/30 dark:text-red-300",
         )}
       >
         {check.ok ? "OK" : "Fix"}
@@ -470,30 +551,26 @@ function SceneButton({
   scene: (typeof SCENE_LINKS)[number];
   onLaunch: () => void;
 }) {
-  const color = {
-    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  }[scene.color];
   const Icon = scene.icon;
 
   return (
     <button
       type="button"
       onClick={onLaunch}
-      className="flex w-full items-center gap-3 rounded-lg border border-gray-100 bg-white p-3 text-left transition-colors hover:border-gray-200 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-900"
+      className="group flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition-colors hover:border-[#071f5c]/30 hover:bg-[#071f5c]/5 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-blue-300/5"
     >
-      <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", color)}>
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#071f5c] text-white">
         <Icon className="h-4.5 w-4.5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <p className="text-sm font-black text-slate-950 dark:text-white">
           {scene.title}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{scene.detail}</p>
+        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+          {scene.detail}
+        </p>
       </div>
-      <ArrowRight className="h-4 w-4 text-gray-400" />
+      <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#ec006d]" />
     </button>
   );
 }
@@ -506,15 +583,15 @@ function DebugBlock({
   rows: Array<[string, string]>;
 }) {
   return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
-      <p className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+      <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400">
         {title}
       </p>
       <div className="space-y-1.5">
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-500">{label}</span>
-            <span className="truncate text-right font-mono text-[11px] text-gray-700 dark:text-gray-300">
+            <span className="text-xs text-slate-500">{label}</span>
+            <span className="truncate text-right font-mono text-[11px] text-slate-700 dark:text-slate-300">
               {value}
             </span>
           </div>

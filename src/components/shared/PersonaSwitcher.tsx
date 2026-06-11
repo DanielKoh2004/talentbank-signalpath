@@ -13,17 +13,45 @@ import { useState, useRef, useEffect } from "react";
 
 
 
-const ROLE_COLORS: Record<UserRole, string> = {
-  candidate: "from-indigo-500 to-violet-600",
-  employer: "from-emerald-500 to-teal-600",
-  university_admin: "from-amber-500 to-orange-600",
+const ROLE_BORDER: Record<UserRole, string> = {
+  candidate: "border-[#071f5c]/20",
+  employer: "border-[#071f5c]/20",
+  university_admin: "border-[#071f5c]/20",
 };
 
-const ROLE_BORDER: Record<UserRole, string> = {
-  candidate: "border-indigo-500/30",
-  employer: "border-emerald-500/30",
-  university_admin: "border-amber-500/30",
+const ROLE_DOT: Record<UserRole, string> = {
+  candidate: "bg-[#ec006d]",
+  employer: "bg-emerald-500",
+  university_admin: "bg-amber-500",
 };
+
+function PersonaAvatar({
+  initials,
+  role,
+  size = "md",
+}: {
+  initials: string;
+  role: UserRole;
+  size?: "sm" | "md";
+}) {
+  return (
+    <span
+      className={cn(
+        "relative inline-flex shrink-0 items-center justify-center rounded-full bg-[#071f5c] text-white shadow-sm ring-1 ring-white/70 dark:ring-slate-900",
+        size === "sm" ? "h-8 w-8 text-[10px]" : "h-9 w-9 text-[11px]"
+      )}
+      aria-hidden="true"
+    >
+      <span className="font-black leading-none tracking-normal">{initials}</span>
+      <span
+        className={cn(
+          "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900",
+          ROLE_DOT[role]
+        )}
+      />
+    </span>
+  );
+}
 
 export function PersonaSwitcher() {
   const { persona, personas, switchPersona } = usePersona();
@@ -55,14 +83,11 @@ export function PersonaSwitcher() {
           ROLE_BORDER[persona.role]
         )}
       >
-        <div
-          className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br text-white text-xs font-bold shadow-sm",
-            ROLE_COLORS[persona.role]
-          )}
-        >
-          {persona.avatarInitials}
-        </div>
+        <PersonaAvatar
+          initials={persona.avatarInitials}
+          role={persona.role}
+          size="sm"
+        />
         <div className="flex flex-col items-start">
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
             {persona.name}
@@ -103,14 +128,7 @@ export function PersonaSwitcher() {
                     : "hover:bg-gray-50 dark:hover:bg-gray-700/30"
                 )}
               >
-                <div
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br text-white text-sm font-bold shadow-sm",
-                    ROLE_COLORS[p.role]
-                  )}
-                >
-                  {p.avatarInitials}
-                </div>
+                <PersonaAvatar initials={p.avatarInitials} role={p.role} />
                 <div className="flex flex-col min-w-0">
                   <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                     {p.name}
