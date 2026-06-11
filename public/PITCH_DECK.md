@@ -110,53 +110,36 @@ This rests on one position, and it's the opposite of every hiring AI on the mark
 
 ## Slide 5 — The Solution
 
-**Headline:** One evidence graph, three audiences — here's how the whole system flows.
+**Headline:** One architecture: a single evidence graph, built once, consumed three ways.
 
-Everything starts when a candidate turns their work into proof. **That same evidence graph then powers all three sides** — nothing is re-entered, re-scored, or hidden. Read down each lane; read across at "same evidence" to see how one graph serves everyone.
+The whole system is one idea. The candidate's artifacts become a **canonical evidence graph** — and every audience reads from that *same* graph. Nothing is re-entered, re-scored, or stored twice.
 
 ```
-      CANDIDATE                    EMPLOYER                   UNIVERSITY
-         │                            │                          │
-   Upload artifacts            Publish role brief         (receives signal only)
-         │                            │                          │
-   AI extracts claims                 │                          │
-   (never invents)                    │                          │
-         │                            │                          │
-   Review & accept ──┐                │                          │
-         │           │                │                          │
-   Living CV +       └──▶  SAME EVIDENCE GRAPH  ◀──┐              │
-   provenance labels        (no re-entry)         │              │
-         │                            │            │             │
-   Career Path Navigator       Deterministic       │             │
-   (gap checklist)             match score +        │             │
-         │                     evidence matrix      │             │
-         │                            │             │             │
-   Marketplace:                AI memo (cites       │      Aggregate readiness
-   see readiness vs role       proof rows)          │      by role family
-         │                            │             │             │
-   Close a gap →               Reject? → snapshot    │      Top missing
-   score moves                 stored                │      evidence-backed skills
-         │                            │             │             │
-         └──▶  add evidence ──▶ Re-engagement: ──────┘      Curriculum gap cards
-               (A/B project)   delta recomputed,           (no individual data)
-                               candidate resurfaces              │
-                                      │                          │
-                                      ▼                          ▼
-                            Auditable hire decision    Cohort insight, privacy-safe
+                          ┌──────────────────────────────┐
+   Candidate artifacts ──▶│   AI EXTRACTION + REVIEW       │
+   (PDF, repo, cert)      │   claims → candidate accepts   │
+                          └───────────────┬────────────────┘
+                                          ▼
+                    ╔══════════════════════════════════════╗
+                    ║      THE EVIDENCE GRAPH               ║
+                    ║  provenance-labelled, candidate-owned ║
+                    ║  (built once — the single source)     ║
+                    ╚════════╤═══════════╤═══════════╤═══════╝
+                             │           │           │
+              reads from ────┘    reads from ───┘    └──── reads from
+                    ▼               ▼                       ▼
+            ┌──────────────┐ ┌──────────────┐      ┌──────────────────┐
+            │  CANDIDATE   │ │  EMPLOYER    │      │   UNIVERSITY      │
+            │              │ │              │      │                  │
+            │ Living CV ·  │ │ Deterministic│      │ Aggregate         │
+            │ readiness vs │ │ score +      │      │ readiness ·       │
+            │ role · gap   │ │ evidence     │      │ curriculum gaps   │
+            │ checklist    │ │ matrix + memo│      │ (no individual    │
+            │              │ │ + re-engage  │      │  data)            │
+            └──────────────┘ └──────────────┘      └──────────────────┘
 ```
 
-**One graph in. Three audiences out. Every arrow is the *same* evidence — that's why a candidate's accepted claim, an employer's score, and a university's cohort signal can never disagree.**
-
-### Module Summary
-
-| Module | Who it serves | Core value |
-|---|---|---|
-| Living Portfolio | Candidate | CV that updates from proof, not memory |
-| Career Path Navigator | Candidate | Realistic next paths with gap checklist |
-| Career Marketplace | Both | Shared opportunity workspace |
-| Smart Talent Matching | Employer | Auditable evidence matrix + AI memo |
-| Talent Re-Engagement | Employer | Surfaces improved candidates automatically |
-| Adaptive Readiness Profile | University | Cohort gaps without individual exposure |
+**One graph in, three views out.** Because all three read the *same* evidence, a candidate's accepted claim, an employer's score, and a university's cohort signal can never disagree — there's no second copy to drift. That single shared source is the architecture; the features built on it are next.
 
 ---
 
@@ -197,132 +180,24 @@ Everything starts when a candidate turns their work into proof. **That same evid
 
 ---
 
-## Slide 7 — Why This Matters to TalentBank
+## Slide 7 — Key Features at a Glance
 
-**Headline:** TalentBank's pipeline problem is an evidence problem — and it's the empty box from Slide 3.
+**Headline:** Six modules, one evidence graph — here's everything you just saw, in one view.
 
-TalentBank connects emerging talent to employers. The bottleneck isn't candidate volume — it's signal quality. Every gap below is a symptom of the same missing answer: *can this person do the job, and where's the proof?*
+| # | Feature | Who | What makes it different |
+|---|---|---|---|
+| 1 | **Living Portfolio** | Candidate | A CV that updates from *proof*, not memory. AI extracts claims; the candidate reviews and accepts each one. Every bullet labelled artifact-backed or self-claimed. |
+| 2 | **Evidence Matching** | Employer | Deterministic, auditable score — every point traces to a visible proof row. Same inputs, same result, every time. |
+| 3 | **AI Match Memo** | Employer | Plain-language explanation generated *only* from the visible evidence matrix. Cites proof rows, never hidden factors. |
+| 4 | **Candidate Agency** | Candidate | Instead of a dead-end rejection, the candidate sees *"you're one artifact away"* — a checklist they own to cross a role's threshold. |
+| 5 | **Re-Engagement Delta** | Employer | When a rejected candidate improves their evidence, the engine recomputes the gap and resurfaces them automatically — recovering pipeline that's normally lost forever. |
+| 6 | **Adaptive Readiness** | University | Cohort-level skill gaps vs. market demand — aggregate only, zero individual student data exposed. |
 
-| The current state | What TalentBank needs | Where SignalPath answers it |
-|---|---|---|
-| CVs with unverifiable claims | Evidence-backed skill proof | Living Portfolio + provenance labels |
-| Black-box ATS rankings | Auditable match reasoning | Deterministic score + evidence matrix |
-| Rejected candidates lost forever | Re-engagement when candidates improve | Re-engagement delta engine |
-| No view into graduate readiness gaps | University-level cohort insight | Adaptive Readiness dashboard |
-
-SignalPath closes exactly these gaps — **not as a replacement for TalentBank, but as the evidence layer underneath the pipeline it already runs.**
-
-**The re-engagement engine alone recovers candidates that would otherwise disappear from the pipeline** — you just saw it run live. The rest of this deck shows where it sits in the market, the scale of the problem in Malaysia, and where it grows next.
+> **One graph in, three audiences out — and every feature above runs on the *same* candidate-owned, provenance-backed evidence. Nothing is re-entered, re-scored, or hidden.**
 
 ---
 
-## Slide 8 — Where We Stand vs. The Market
-
-**Headline:** Well-funded players already attack this. None can reach our corner — and the reason is structural.
-
-We're not first to the problem. But every category solves *half* of it and is architecturally blocked from the other half:
-
-```
-              AUDITABLE  ▲
-                         │                          ★ SIGNALPATH
-                         │                      candidate-owned proof,
-        (open quadrant — │                      every score row inspectable
-         nobody here)    │
-                         │   Jobscan · Teal            TestGorilla · Vervoe
-                         │   ($, résumé optimizers)    ($142+/mo, assessments)
-   ──────────────────────┼──────────────────────────────────────────────▶
-   UNVERIFIED CLAIMS     │                              VERIFIED CAPABILITY
-                         │   Legacy ATS · LinkedIn     HireVue · Eightfold
-                         │   (incumbents)              ($35k+/yr enterprise)
-                         │
-              BLACK BOX  ▼
-```
-
-| Competitor | What they do well | Why they *can't* reach our corner |
-|---|---|---|
-| **Legacy ATS · LinkedIn** | Scale, distribution, incumbency | Match keywords, hide the ranking — broken on *both* axes |
-| **HireVue · Eightfold** *($35k+/yr)* | Real skill signal, enterprise reach | Score stays a **black box**; Eightfold's data is *scraped* about the candidate — hence its **2026 consent lawsuit** |
-| **TestGorilla · Vervoe** *($142+/mo)* | Genuine skill verification | Verify via *their own proprietary test* — candidate **doesn't own it**, can't reuse it, pass/fail still opaque |
-| **Jobscan · Teal** | Transparent, candidate-friendly | Only help you *beat* the keyword filter — they **verify nothing** |
-
-**The structural lock-out:** every competitor's verification (where they have it) lives in *their* system, not the candidate's — and their scoring stays opaque. **SignalPath is the only model where the proof comes from the candidate's *own artifacts*, the candidate *owns and reviews* it, and *every point of the score is inspectable.*** That combination — verified **and** auditable **and** candidate-owned — is the corner no incumbent can pivot into without rebuilding their core.
-
----
-
-## Slide 9 — The Impact in Malaysia
-
-**Headline:** This isn't a niche problem. It's 1.6 million Malaysian graduates — and the official data names exactly the gap we close.
-
-The Malaysian labour market doesn't have a *jobs* problem. Unemployment is only **3.2%**. It has a **matching** problem — skilled people landing in the wrong roles because their capability was never credibly surfaced. That's the verification gap, at national scale:
-
-```
-   5.98 million          ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●  graduates in Malaysia (2024)
-                         │
-                         ▼
-   32.2% underemployed   ●●●●●●●●●  →  1.60 MILLION graduates working
-                                        BELOW their qualifications
-                         │
-                         ▼
-   Aged 24 & under:      ●●●●●●●●●●●●●●●●●●  66% underemployed
-   (fresh grads —                          two in three fresh grads
-    SignalPath's core user)                are mis-matched, not jobless
-```
-
-**Why these specific numbers are *our* numbers, not generic gloom:**
-
-| Malaysian stat (DOSM, 2024) | What it means | What SignalPath does about it |
-|---|---|---|
-| **1.60M graduates underemployed (32.2%)** | Skilled people in the wrong roles — capability never surfaced | Evidence graph surfaces *provable* skill, so the right match becomes findable |
-| **66% of under-24 graduates underemployed** | The fresh-grad cohort — exactly who TalentBank serves — is worst hit | Living Portfolio lets a fresh grad *prove* readiness without a track record |
-| **Skill-related underemployment *rising* even as unemployment falls** | The market is getting *more* mismatched, not less | Verified + auditable matching attacks mismatch directly |
-
-> **3.2% can't find a job. 32.2% are in the wrong one.** SignalPath is built for the second number — the one Malaysia's own statistics call the real problem, and the one no ATS, résumé tool, or black-box AI is solving.
-
-**Conservative reach for TalentBank:** even capturing **1%** of that underemployed cohort is **16,000 graduates** given a credible, evidence-backed path to the right role — every one of them a candidate who currently disappears into the mismatch.
-
----
-
-## Slide 10 — The Storyline (End-to-End Demo Loop)
-
-**Headline:** One loop. Three audiences. No hand-waving.
-
-### The Aisha → DataCo → UM Loop
-
-**Step 1 — Candidate**
-- Aisha uploads her retail analytics project PDF
-- SignalPath extracts 3 claims: SQL dashboard, customer segmentation, stakeholder presentation
-- Aisha accepts 2 claims, marks 1 as self-claimed
-- Living CV updates with proof links and provenance badges
-
-**Step 2 — Marketplace (the candidate's moment of agency)**
-- Aisha opens the DataCo "Junior Product Analyst" opportunity
-- She sees her readiness matrix against *this exact role*: SQL strong, experimentation missing
-- **The system tells her what would get her hired, in her own words:** "You're one artifact away. Add evidence of A/B testing and you cross DataCo's threshold for this role."
-- This is the difference between SignalPath and an ATS: a rejection elsewhere is a dead end; here it's a *checklist she owns*. She decides what to build next — the system just made the path legible.
-- She signals interest — DataCo is notified
-
-**Step 3 — Employer**
-- DataCo opens the role workspace
-- Aisha appears in the shortlist with a score breakdown
-- Employer opens evidence matrix → sees exactly why she matched and where she fell short
-- AI memo is generated from the matrix — no hidden inputs
-
-**Step 4 — Rejection & Re-Engagement**
-- DataCo rejects Aisha; a baseline snapshot is stored
-- Aisha later adds an A/B testing project
-- Re-engagement engine computes the delta: experimentation gap is now closed
-- HR receives a flagged re-engagement draft — Aisha is worth a second look
-
-**Step 5 — University**
-- University of Malaya dashboard shows: 0% of the 2025 Product Analytics cohort have artifact-backed experimentation evidence
-- 61% of Product Analyst role briefs in the marketplace require it
-- Curriculum gap is visible at cohort scale — no individual student data exposed
-
-> **Same evidence graph. Candidate gets agency. Employer gets signal. University gets accountability.**
-
----
-
-## Slide 11 — AI Craft
+## Slide 8 — AI Craft
 
 **Headline:** AI does the hard parts. Humans stay in control.
 
@@ -356,6 +231,91 @@ AI memo generated from score rows → explanation (grounded, not invented)      
 The retrieval stage is built against a swappable interface — the POC ships a mock retriever; the pgvector implementation drops in without touching the scoring or memo stages. **The auditable parts — scoring and the grounded memo — are real and running in the demo.**
 
 **Skill taxonomy rule:** The LLM receives only a relevant subset of canonical skill IDs. If it sees a skill-like phrase not in the dictionary, it goes into `suggested_skill_names` for human review — it never affects the score.
+
+---
+
+## Slide 9 — Why This Matters to TalentBank
+
+**Headline:** TalentBank's pipeline problem is an evidence problem — and it's the empty box from Slide 3.
+
+TalentBank connects emerging talent to employers. The bottleneck isn't candidate volume — it's signal quality. Every gap below is a symptom of the same missing answer: *can this person do the job, and where's the proof?*
+
+| The current state | What TalentBank needs | Where SignalPath answers it |
+|---|---|---|
+| CVs with unverifiable claims | Evidence-backed skill proof | Living Portfolio + provenance labels |
+| Black-box ATS rankings | Auditable match reasoning | Deterministic score + evidence matrix |
+| Rejected candidates lost forever | Re-engagement when candidates improve | Re-engagement delta engine |
+| No view into graduate readiness gaps | University-level cohort insight | Adaptive Readiness dashboard |
+
+SignalPath closes exactly these gaps — **not as a replacement for TalentBank, but as the evidence layer underneath the pipeline it already runs.**
+
+**The re-engagement engine alone recovers candidates that would otherwise disappear from the pipeline** — you just saw it run live. The rest of this deck shows where it sits in the market, the scale of the problem in Malaysia, and where it grows next.
+
+---
+
+## Slide 10 — Where We Stand vs. The Market
+
+**Headline:** Well-funded players already attack this. None can reach our corner — and the reason is structural.
+
+We're not first to the problem. But every category solves *half* of it and is architecturally blocked from the other half:
+
+```
+              AUDITABLE  ▲
+                         │                          ★ SIGNALPATH
+                         │                      candidate-owned proof,
+        (open quadrant — │                      every score row inspectable
+         nobody here)    │
+                         │   Jobscan · Teal            TestGorilla · Vervoe
+                         │   ($, résumé optimizers)    ($142+/mo, assessments)
+   ──────────────────────┼──────────────────────────────────────────────▶
+   UNVERIFIED CLAIMS     │                              VERIFIED CAPABILITY
+                         │   Legacy ATS · LinkedIn     HireVue · Eightfold
+                         │   (incumbents)              ($35k+/yr enterprise)
+                         │
+              BLACK BOX  ▼
+```
+
+| Competitor | What they do well | Why they *can't* reach our corner |
+|---|---|---|
+| **Legacy ATS · LinkedIn** | Scale, distribution, incumbency | Match keywords, hide the ranking — broken on *both* axes |
+| **HireVue · Eightfold** *($35k+/yr)* | Real skill signal, enterprise reach | Score stays a **black box**; Eightfold's data is *scraped* about the candidate — hence its **2026 consent lawsuit** |
+| **TestGorilla · Vervoe** *($142+/mo)* | Genuine skill verification | Verify via *their own proprietary test* — candidate **doesn't own it**, can't reuse it, pass/fail still opaque |
+| **Jobscan · Teal** | Transparent, candidate-friendly | Only help you *beat* the keyword filter — they **verify nothing** |
+
+**The structural lock-out:** every competitor's verification (where they have it) lives in *their* system, not the candidate's — and their scoring stays opaque. **SignalPath is the only model where the proof comes from the candidate's *own artifacts*, the candidate *owns and reviews* it, and *every point of the score is inspectable.*** That combination — verified **and** auditable **and** candidate-owned — is the corner no incumbent can pivot into without rebuilding their core.
+
+---
+
+## Slide 11 — The Impact in Malaysia
+
+**Headline:** This isn't a niche problem. It's 1.6 million Malaysian graduates — and the official data names exactly the gap we close.
+
+The Malaysian labour market doesn't have a *jobs* problem. Unemployment is only **3.2%**. It has a **matching** problem — skilled people landing in the wrong roles because their capability was never credibly surfaced. That's the verification gap, at national scale:
+
+```
+   5.98 million          ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●  graduates in Malaysia (2024)
+                         │
+                         ▼
+   32.2% underemployed   ●●●●●●●●●  →  1.60 MILLION graduates working
+                                        BELOW their qualifications
+                         │
+                         ▼
+   Aged 24 & under:      ●●●●●●●●●●●●●●●●●●  66% underemployed
+   (fresh grads —                          two in three fresh grads
+    SignalPath's core user)                are mis-matched, not jobless
+```
+
+**Why these specific numbers are *our* numbers, not generic gloom:**
+
+| Malaysian stat (DOSM, 2024) | What it means | What SignalPath does about it |
+|---|---|---|
+| **1.60M graduates underemployed (32.2%)** | Skilled people in the wrong roles — capability never surfaced | Evidence graph surfaces *provable* skill, so the right match becomes findable |
+| **66% of under-24 graduates underemployed** | The fresh-grad cohort — exactly who TalentBank serves — is worst hit | Living Portfolio lets a fresh grad *prove* readiness without a track record |
+| **Skill-related underemployment *rising* even as unemployment falls** | The market is getting *more* mismatched, not less | Verified + auditable matching attacks mismatch directly |
+
+> **3.2% can't find a job. 32.2% are in the wrong one.** SignalPath is built for the second number — the one Malaysia's own statistics call the real problem, and the one no ATS, résumé tool, or black-box AI is solving.
+
+**Conservative reach for TalentBank:** even capturing **1%** of that underemployed cohort is **16,000 graduates** given a credible, evidence-backed path to the right role — every one of them a candidate who currently disappears into the mismatch.
 
 ---
 
