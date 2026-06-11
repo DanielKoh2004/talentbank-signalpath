@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Compass, MonitorCog, Search } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PersonaSwitcher } from "@/components/shared/PersonaSwitcher";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 export interface AppNavItem {
@@ -73,6 +74,7 @@ export function AppChrome({ children, navItems, sectionLabel }: AppChromeProps) 
               <MonitorCog className="h-4 w-4" />
               Demo Control
             </Link>
+            <ThemeToggle />
             <PersonaSwitcher />
           </div>
         </div>

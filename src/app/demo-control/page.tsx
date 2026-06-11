@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
 import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { PersonaSwitcher } from "@/components/shared/PersonaSwitcher";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -196,6 +197,7 @@ export default function DemoControlPage() {
               <ArrowLeft className="h-4 w-4" />
               Back to App
             </Link>
+            <ThemeToggle />
             <PersonaSwitcher />
           </div>
         </div>

@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { FeatureCarousel } from "@/components/marketing/FeatureCarousel";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -103,12 +104,15 @@ export default function HomePage() {
             <a href="#audiences">Audiences</a>
             <a href="#loop">How it works</a>
           </nav>
-          <Link
-            href="/portfolio"
-            className={cn(buttonVariants(), "bg-[#ec006d] hover:bg-[#d10062]")}
-          >
-            Try Candidate Demo
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/portfolio"
+              className={cn(buttonVariants(), "bg-[#ec006d] hover:bg-[#d10062]")}
+            >
+              Try Candidate Demo
+            </Link>
+          </div>
         </div>
       </header>
 
