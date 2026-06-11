@@ -204,59 +204,61 @@ export function LivingCV({
         </div>
 
         {/* Claims by category */}
-        {categoryOrder.map((category) => {
-          const categoryClaims = groupedClaims[category];
-          const Icon = CATEGORY_ICONS[category] ?? FileText;
+        <div className="max-h-[min(560px,calc(100vh-22rem))] overflow-y-auto overscroll-contain">
+          {categoryOrder.map((category) => {
+            const categoryClaims = groupedClaims[category];
+            const Icon = CATEGORY_ICONS[category] ?? FileText;
 
-          return (
-            <div
-              key={category}
-              className="px-6 py-4 border-b border-gray-100 last:border-b-0 dark:border-gray-800"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Icon className="h-4 w-4 text-gray-400" />
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  {category}
-                </h3>
-                <Badge variant="secondary" className="text-[10px] ml-auto">
-                  {categoryClaims.length} claims
-                </Badge>
-              </div>
+            return (
+              <div
+                key={category}
+                className="px-6 py-4 border-b border-gray-100 last:border-b-0 dark:border-gray-800"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon className="h-4 w-4 text-gray-400" />
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {category}
+                  </h3>
+                  <Badge variant="secondary" className="text-[10px] ml-auto">
+                    {categoryClaims.length} claims
+                  </Badge>
+                </div>
 
-              <div className="space-y-2.5">
-                {categoryClaims.map((claim) => (
-                  <div
-                    key={claim.id}
-                    className="flex items-start gap-3 rounded-md bg-gray-50 p-3 dark:bg-gray-800/40"
-                  >
-                    <div className="flex-shrink-0 mt-0.5">
-                      <ProvenanceBadge
-                        status={claim.provenanceStatus as ProvenanceStatus}
-                        showLabel={false}
-                        size="sm"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                        {claim.claimText}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[10px] text-gray-400">
-                          from {claim.artifact.title}
-                        </span>
-                        <EvidenceQualityBadge
-                          score={claim.evidenceQualityScore}
+                <div className="space-y-2.5">
+                  {categoryClaims.map((claim) => (
+                    <div
+                      key={claim.id}
+                      className="flex items-start gap-3 rounded-md bg-gray-50 p-3 dark:bg-gray-800/40"
+                    >
+                      <div className="flex-shrink-0 mt-0.5">
+                        <ProvenanceBadge
+                          status={claim.provenanceStatus as ProvenanceStatus}
                           showLabel={false}
                           size="sm"
                         />
                       </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                          {claim.claimText}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="text-[10px] text-gray-400">
+                            from {claim.artifact.title}
+                          </span>
+                          <EvidenceQualityBadge
+                            score={claim.evidenceQualityScore}
+                            showLabel={false}
+                            size="sm"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );
