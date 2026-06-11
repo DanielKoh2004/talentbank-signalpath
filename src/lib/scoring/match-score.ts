@@ -14,6 +14,7 @@ import {
 
 export interface MatchClaimInput extends ClaimForScoring {
   provenanceStatus: string;
+  confidence?: number | null;
   artifactTitle?: string | null;
   sourceUrl?: string | null;
   sourceSpan?: string | null;
@@ -61,9 +62,11 @@ export interface MatchScoreInput {
 
 export interface EvidenceMatrixClaim {
   id: string;
+  artifactId: string;
   claimText: string;
   provenanceStatus: string;
   evidenceQualityScore: number;
+  confidence?: number | null;
   artifactTitle?: string | null;
   sourceUrl?: string | null;
   sourceSpan?: string | null;
@@ -293,9 +296,11 @@ function buildEvidenceMatrix(
         const fullClaim = claimMap.get(claim.id);
         return {
           id: claim.id,
+          artifactId: fullClaim?.artifactId ?? "",
           claimText: claim.claimText,
           provenanceStatus: claim.provenanceStatus,
           evidenceQualityScore: claim.evidenceQualityScore,
+          confidence: fullClaim?.confidence ?? null,
           artifactTitle: fullClaim?.artifactTitle ?? null,
           sourceUrl: fullClaim?.sourceUrl ?? null,
           sourceSpan: fullClaim?.sourceSpan ?? null,

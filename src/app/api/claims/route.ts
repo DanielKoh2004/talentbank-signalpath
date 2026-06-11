@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { stringifyArray, parseJsonArray } from "@/lib/utils";
 
+function normalizeClaimText(value: unknown): string {
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
+}
+
 // =============================================================================
 // GET  /api/claims — List evidence claims for a candidate
 // PATCH /api/claims — Accept/edit/reject a claim
@@ -53,6 +57,8 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
     const { claimId, action, editedText, editedSkillIds, visibility } = body;
+    const incomingClaimText =
+      typeof body.claim_text === "string" ? body.claim_text : editedText;
 
     if (!claimId || !action) {
       return NextResponse.json(
@@ -92,7 +98,18 @@ export async function PATCH(request: NextRequest) {
       case "edit":
         updateData.candidateStatus = "edited";
         updateData.lastVerifiedAt = new Date();
-        if (editedText) updateData.claimText = editedText;
+        if (typeof incomingClaimText === "string") {
+          updateData.claimText = incomingClaimText;
+
+          const textWasModified =
+            normalizeClaimText(incomingClaimText) !==
+            normalizeClaimText(existing.claimText);
+
+          if (textWasModified) {
+            updateData.provenanceStatus = "self_claimed";
+            updateData.confidence = null;
+          }
+        }
         if (editedSkillIds) {
           updateData.normalizedSkillIds = stringifyArray(editedSkillIds);
         }

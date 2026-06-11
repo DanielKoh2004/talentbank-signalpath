@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GlobalCommandMenu } from "@/components/shared/GlobalCommandMenu";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PersonaProvider } from "@/providers/PersonaProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
@@ -35,6 +36,7 @@ export default function RootLayout({
           <PersonaProvider>
             <TooltipProvider>
               {children}
+              <GlobalCommandMenu />
             </TooltipProvider>
           </PersonaProvider>
         </QueryProvider>

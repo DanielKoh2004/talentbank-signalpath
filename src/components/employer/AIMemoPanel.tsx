@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 
 export function AIMemoPanel({
@@ -11,6 +13,9 @@ export function AIMemoPanel({
   memo: string | null | undefined;
   source?: "ai" | "matrix_fallback" | string | null;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const paragraphs = memo?.split(/\n{2,}/) ?? [];
+
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
@@ -25,10 +30,29 @@ export function AIMemoPanel({
         </div>
 
         {memo ? (
-          <div className="space-y-2 text-sm leading-relaxed text-gray-700 dark:text-gray-200">
-            {memo.split(/\n{2,}/).map((paragraph, index) => (
-              <p key={`${index}-${paragraph.slice(0, 12)}`}>{paragraph}</p>
-            ))}
+          <div className="space-y-2">
+            <div
+              className={
+                expanded
+                  ? "space-y-2 text-sm leading-relaxed text-gray-700 dark:text-gray-200"
+                  : "line-clamp-3 text-sm leading-relaxed text-gray-700 dark:text-gray-200"
+              }
+            >
+              {paragraphs.map((paragraph, index) => (
+                <p key={`${index}-${paragraph.slice(0, 12)}`}>{paragraph}</p>
+              ))}
+            </div>
+            {memo.length > 180 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-0 text-xs text-primary hover:bg-transparent"
+                onClick={() => setExpanded((current) => !current)}
+              >
+                {expanded ? "Show less" : "Read more"}
+              </Button>
+            )}
           </div>
         ) : (
           <p className="text-sm text-gray-500">

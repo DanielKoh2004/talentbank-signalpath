@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -21,7 +23,9 @@ import {
   Award,
   Image,
   FolderOpen,
-  Loader2,
+  Brain,
+  ScanLine,
+  ShieldCheck,
 } from "lucide-react";
 
 // =============================================================================
@@ -63,6 +67,13 @@ const DEMO_ARTIFACTS = [
   },
 ];
 
+const AI_STATUS_SEQUENCE = [
+  "Parsing PDF artifact...",
+  "Mapping to canonical taxonomy...",
+  "Scoring provenance...",
+  "Updating Living Portfolio.",
+];
+
 interface ArtifactUploadProps {
   onUpload: (data: {
     title: string;
@@ -85,8 +96,22 @@ export function ArtifactUpload({
   const [type, setType] = useState("project");
   const [sourceUrl, setSourceUrl] = useState("");
   const [pastedText, setPastedText] = useState("");
+  const [statusIndex, setStatusIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isUploading) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setStatusIndex((current) => (current + 1) % AI_STATUS_SEQUENCE.length);
+    }, 800);
+
+    return () => window.clearInterval(interval);
+  }, [isUploading]);
 
   function handleDemoUpload(demo: (typeof DEMO_ARTIFACTS)[0]) {
+    setStatusIndex(0);
     onUpload({
       title: demo.title,
       type: demo.type,
@@ -96,6 +121,7 @@ export function ArtifactUpload({
 
   function handleCustomUpload() {
     if (!title.trim()) return;
+    setStatusIndex(0);
     onUpload({
       title: title.trim(),
       type,
@@ -105,6 +131,74 @@ export function ArtifactUpload({
     setTitle("");
     setSourceUrl("");
     setPastedText("");
+  }
+
+  if (isUploading) {
+    return (
+      <Card className={cn("overflow-hidden border-primary/20 shadow-sm", className)}>
+        <CardContent className="p-0">
+          <div className="border-b border-primary/10 bg-primary/5 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                <Brain className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-950 dark:text-gray-100">
+                  Evidence engine is reading your artifact
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-primary">
+                  <ScanLine className="h-3.5 w-3.5 animate-pulse" />
+                  {AI_STATUS_SEQUENCE[statusIndex]}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 p-5">
+            <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-12 w-9 rounded-sm" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-2">
+                <Skeleton className="h-2.5 w-full" />
+                <Skeleton className="h-2.5 w-11/12" />
+                <Skeleton className="h-2.5 w-10/12" />
+                <Skeleton className="h-2.5 w-8/12" />
+              </div>
+
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                <Skeleton className="h-7 rounded-full" />
+                <Skeleton className="h-7 rounded-full" />
+                <Skeleton className="h-7 rounded-full" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              {[
+                ["Extract", "text-primary"],
+                ["Normalize", statusIndex >= 1 ? "text-primary" : "text-gray-400"],
+                ["Verify", statusIndex >= 2 ? "text-primary" : "text-gray-400"],
+              ].map(([label, color]) => (
+                <div
+                  key={label}
+                  className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <div className={cn("flex items-center gap-1.5 font-semibold", color)}>
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -148,12 +242,10 @@ export function ArtifactUpload({
               <button
                 key={demo.id}
                 onClick={() => handleDemoUpload(demo)}
-                disabled={isUploading}
                 className={cn(
                   "w-full flex items-start gap-3 rounded-lg border border-gray-200 p-3 text-left transition-all",
                   "hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-sm",
                   "dark:border-gray-700 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/10",
-                  "disabled:opacity-50 disabled:pointer-events-none"
                 )}
               >
                 <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -171,7 +263,6 @@ export function ArtifactUpload({
                     {demo.description}
                   </p>
                 </div>
-                {isUploading && <Loader2 className="h-4 w-4 animate-spin text-gray-400 mt-1" />}
               </button>
             ))}
           </div>
@@ -232,18 +323,20 @@ export function ArtifactUpload({
               />
             </div>
 
-            <Button
-              onClick={handleCustomUpload}
-              disabled={isUploading || !title.trim()}
-              className="w-full gap-2"
-            >
-              {isUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+            {!title.trim() ? (
+              <DisabledTooltipButton
+                className="w-full gap-2"
+                disabledReason="Enter an artifact title before uploading."
+              >
                 <Upload className="h-4 w-4" />
-              )}
-              Upload Artifact
-            </Button>
+                Upload Artifact
+              </DisabledTooltipButton>
+            ) : (
+              <Button onClick={handleCustomUpload} className="w-full gap-2">
+                <Upload className="h-4 w-4" />
+                Upload Artifact
+              </Button>
+            )}
           </div>
         )}
       </CardContent>

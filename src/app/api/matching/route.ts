@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
         normalizedSkillIds: parseJsonArray<string>(claim.normalizedSkillIds),
         provenanceStatus: claim.provenanceStatus,
         evidenceQualityScore: claim.evidenceQualityScore,
+        confidence: claim.confidence,
         createdAt: claim.createdAt,
         artifactTitle: claim.artifact.title,
         sourceUrl: claim.artifact.sourceUrl,

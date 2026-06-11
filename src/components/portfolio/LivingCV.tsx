@@ -2,7 +2,8 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SkillTag } from "@/components/shared/SkillTag";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { SkillBadge } from "@/components/shared/SkillBadge";
 import { ProvenanceBadge } from "@/components/shared/ProvenanceBadge";
 import { EvidenceQualityBadge } from "@/components/shared/EvidenceQualityBadge";
 import { cn } from "@/lib/utils";
@@ -14,7 +15,7 @@ import {
   Shield,
   FileText,
 } from "lucide-react";
-import type { ProvenanceStatus, SkillCategory } from "@/types";
+import type { ProvenanceStatus } from "@/types";
 
 // =============================================================================
 // LivingCV
@@ -27,6 +28,7 @@ interface LivingCVProps {
   candidateName: string;
   candidateDescription?: string;
   skillMap?: Record<string, { name: string; category: string }>;
+  onAddEvidence?: () => void;
   className?: string;
 }
 
@@ -70,10 +72,17 @@ function getSkillSummary(
   category: string;
   bestQuality: number;
   claimCount: number;
+  bestProvenanceStatus: string;
 }> {
   const skillStats: Record<
     string,
-    { name: string; category: string; bestQuality: number; claimCount: number }
+    {
+      name: string;
+      category: string;
+      bestQuality: number;
+      claimCount: number;
+      bestProvenanceStatus: string;
+    }
   > = {};
 
   for (const claim of claims) {
@@ -87,12 +96,13 @@ function getSkillSummary(
           category: skill.category,
           bestQuality: claim.evidenceQualityScore,
           claimCount: 1,
+          bestProvenanceStatus: claim.provenanceStatus,
         };
       } else {
-        skillStats[skillId].bestQuality = Math.max(
-          skillStats[skillId].bestQuality,
-          claim.evidenceQualityScore
-        );
+        if (claim.evidenceQualityScore > skillStats[skillId].bestQuality) {
+          skillStats[skillId].bestQuality = claim.evidenceQualityScore;
+          skillStats[skillId].bestProvenanceStatus = claim.provenanceStatus;
+        }
         skillStats[skillId].claimCount++;
       }
     }
@@ -119,6 +129,7 @@ export function LivingCV({
   candidateName,
   candidateDescription,
   skillMap = {},
+  onAddEvidence,
   className,
 }: LivingCVProps) {
   const acceptedClaims = claims.filter(
@@ -126,24 +137,23 @@ export function LivingCV({
   );
 
   const skillSummary = getSkillSummary(acceptedClaims, skillMap);
+  const visibleSkillSummary =
+    skillSummary.length > 5 ? skillSummary.slice(0, 3) : skillSummary;
+  const hiddenSkillCount = skillSummary.length - visibleSkillSummary.length;
   const groupedClaims = groupClaimsByCategory(acceptedClaims, skillMap);
   const categoryOrder = Object.keys(groupedClaims).sort();
 
   if (acceptedClaims.length === 0) {
     return (
-      <Card className={className}>
-        <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 mb-4">
-            <GraduationCap className="h-7 w-7 text-gray-400" />
-          </div>
-          <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Living CV Preview
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-            Accept evidence claims from your artifacts to build your Living CV. Each accepted claim becomes a verified entry with proof.
-          </p>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={GraduationCap}
+        title="Living CV preview is empty"
+        description="Accept evidence claims from your artifacts to build a verified CV with proof links."
+        actionLabel={onAddEvidence ? "Upload Evidence" : undefined}
+        onAction={onAddEvidence}
+        actionVariant="outline"
+        className={className}
+      />
     );
   }
 
@@ -172,12 +182,11 @@ export function LivingCV({
             Skills Evidence Map
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            {skillSummary.map((skill) => (
+            {visibleSkillSummary.map((skill) => (
               <div key={skill.skillId} className="flex items-center gap-1">
-                <SkillTag
-                  name={skill.name}
-                  category={skill.category as SkillCategory}
-                  size="sm"
+                <SkillBadge
+                  skillName={skill.name}
+                  provenance_status={skill.bestProvenanceStatus}
                 />
                 <EvidenceQualityBadge
                   score={skill.bestQuality}
@@ -186,6 +195,11 @@ export function LivingCV({
                 />
               </div>
             ))}
+            {hiddenSkillCount > 0 && (
+              <Badge variant="secondary" className="h-6 text-[11px]">
+                +{hiddenSkillCount} more
+              </Badge>
+            )}
           </div>
         </div>
 

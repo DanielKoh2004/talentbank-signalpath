@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
 import { OpportunityCard } from "@/components/marketplace/OpportunityCard";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -217,6 +219,7 @@ export default function RolesPage() {
           </Button>
           <Button
             size="sm"
+            variant={roles.length === 0 ? "outline" : "default"}
             className="gap-1.5"
             onClick={() => setCreateOpen(true)}
           >
@@ -250,23 +253,13 @@ export default function RolesPage() {
 
       {/* Role cards */}
       {roles.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <Search className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              No role briefs yet. Create your first role to start receiving
-              candidate matches.
-            </p>
-            <Button
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Create Role
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Search}
+          title="No role briefs yet"
+          description="Create a taxonomy-constrained role brief to start receiving auditable candidate matches."
+          actionLabel="Create Role"
+          onAction={() => setCreateOpen(true)}
+        />
       ) : (
         <div className="space-y-1.5">
           <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
@@ -542,16 +535,27 @@ function CreateRoleDialog({
                     ))}
                 </SelectContent>
               </Select>
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-1.5"
-                onClick={addRequirement}
-                disabled={!selectedSkillId}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add
-              </Button>
+              {!selectedSkillId ? (
+                <DisabledTooltipButton
+                  type="button"
+                  variant="outline"
+                  className="gap-1.5"
+                  disabledReason="Select a taxonomy skill before adding a requirement."
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </DisabledTooltipButton>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={addRequirement}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+              )}
             </div>
 
             {requirements.length === 0 ? (
@@ -637,20 +641,36 @@ function CreateRoleDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
-            Cancel
-          </Button>
-          <Button type="button" onClick={submitRole} disabled={submitting}>
-            {submitting ? (
+          {submitting ? (
+            <DisabledTooltipButton
+              type="button"
+              variant="outline"
+              disabledReason="Role creation is already in progress."
+            >
+              Cancel
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+          )}
+          {submitting ? (
+            <DisabledTooltipButton
+              type="button"
+              disabledReason="Role creation is already in progress."
+            >
               <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : null}
-            Create Role
-          </Button>
+              Create Role
+            </DisabledTooltipButton>
+          ) : (
+            <Button type="button" onClick={submitRole}>
+              Create Role
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

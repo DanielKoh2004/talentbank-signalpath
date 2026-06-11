@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
 import { PathCard } from "@/components/paths/PathCard";
 import { CareerShapeCard } from "@/components/paths/CareerShapeCard";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -27,6 +29,7 @@ type PathsData = any;
 
 export default function PathsPage() {
   const { persona } = usePersona();
+  const router = useRouter();
   const candidateId = persona.role === "candidate" ? "profile_aisha" : null;
 
   const [data, setData] = useState<PathsData | null>(null);
@@ -94,11 +97,14 @@ export default function PathsPage() {
 
   if (!data || !data.paths) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Map className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-        <p className="text-sm text-gray-500">
-          Upload and accept evidence claims in your Portfolio to see career paths.
-        </p>
+      <div className="py-20">
+        <EmptyState
+          icon={Map}
+          title="No career paths yet"
+          description="Upload and accept evidence claims so TalentVault can build your career shape."
+          actionLabel="Open Portfolio"
+          onAction={() => router.push("/portfolio")}
+        />
       </div>
     );
   }
@@ -187,14 +193,13 @@ export default function PathsPage() {
           ))}
 
           {paths.length === 0 && (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-                <Map className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-                <p className="text-sm text-gray-500">
-                  No paths could be generated. Upload more evidence to your Portfolio.
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Map}
+              title="No path is ready to show"
+              description="Add more accepted evidence so the navigator can surface realistic options."
+              actionLabel="Open Portfolio"
+              onAction={() => router.push("/portfolio")}
+            />
           )}
         </div>
       </div>

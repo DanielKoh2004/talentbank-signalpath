@@ -3,6 +3,8 @@
 import { use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AIMemoPanel } from "@/components/employer/AIMemoPanel";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   EvidenceMatrix,
   type EvidenceMatrixRow,
@@ -285,9 +287,32 @@ export default function RoleWorkspacePage({
   const scoreByCandidateId = new Map(
     (role.matchScores ?? []).map((score) => [score.candidateId, score])
   );
+  const expandedCandidateName =
+    interactions.find((candidate) => candidate.candidateId === expandedCandidate)
+      ?.candidateName ?? null;
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="sticky top-0 z-10 -mx-1 border-b bg-background/95 px-1 py-4 backdrop-blur">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <button
+            type="button"
+            onClick={() => router.push("/roles")}
+            className="font-medium text-muted-foreground hover:text-foreground"
+          >
+            Roles
+          </button>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-semibold text-foreground">{role.title}</span>
+          {expandedCandidateName && (
+            <>
+              <span className="text-muted-foreground">/</span>
+              <span className="font-medium text-primary">{expandedCandidateName}</span>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Back button + header */}
       <div>
         <Button
@@ -360,19 +385,30 @@ export default function RoleWorkspacePage({
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
             </Button>
-            <Button
-              onClick={computeScores}
-              size="sm"
-              className="gap-1.5"
-              disabled={isComputing}
-            >
-              {isComputing ? (
+            {isComputing ? (
+              <DisabledTooltipButton
+                size="sm"
+                className="gap-1.5"
+                disabledReason="Match scores are already being recomputed."
+              >
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
+                Compute Scores
+              </DisabledTooltipButton>
+            ) : (
+              <Button
+                onClick={computeScores}
+                size="sm"
+                variant={
+                  filteredInteractions.length === 0 || expandedCandidate
+                    ? "outline"
+                    : "default"
+                }
+                className="gap-1.5"
+              >
                 <Shield className="h-3.5 w-3.5" />
-              )}
-              Compute Scores
-            </Button>
+                Compute Scores
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -517,18 +553,29 @@ export default function RoleWorkspacePage({
 
           {/* Candidate list */}
           {filteredInteractions.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-                <Search className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {candidateFilter === "interested"
-                    ? "No interested candidates yet."
-                    : candidateFilter === "shortlisted"
-                      ? "No shortlisted candidates yet."
-                      : "No candidate interactions found."}
-                </p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={candidateFilter === "shortlisted" ? UserCheck : Search}
+              title={
+                candidateFilter === "interested"
+                  ? "No interested candidates yet"
+                  : candidateFilter === "shortlisted"
+                    ? "No shortlisted candidates yet"
+                    : "No candidate interactions found"
+              }
+              description={
+                candidateFilter === "shortlisted"
+                  ? "Review interested candidates first, then shortlist the strongest evidence-backed matches."
+                  : "Refresh the workspace or ask a candidate persona to express interest from the marketplace."
+              }
+              actionLabel={
+                candidateFilter === "shortlisted" ? "Show Interested" : "Refresh Candidates"
+              }
+              onAction={() =>
+                candidateFilter === "shortlisted"
+                  ? setCandidateFilter("interested")
+                  : refreshRole()
+              }
+            />
           ) : (
             <div className="space-y-2">
               {filteredInteractions.map((interaction) => (
@@ -539,6 +586,7 @@ export default function RoleWorkspacePage({
                   matchScore={scoreByCandidateId.get(interaction.candidateId) ?? null}
                   isExpanded={expandedCandidate === interaction.candidateId}
                   onToggle={() => toggleExpand(interaction.candidateId)}
+                  onComputeScores={computeScores}
                   onChanged={refreshRole}
                 />
               ))}
@@ -577,6 +625,7 @@ function CandidateRow({
   matchScore,
   isExpanded,
   onToggle,
+  onComputeScores,
   onChanged,
 }: {
   roleBriefId: string;
@@ -584,6 +633,7 @@ function CandidateRow({
   matchScore: MatchScoreData | null;
   isExpanded: boolean;
   onToggle: () => void;
+  onComputeScores: () => void;
   onChanged: () => Promise<void>;
 }) {
   const [isSnapshotting, setIsSnapshotting] = useState(false);
@@ -764,17 +814,18 @@ function CandidateRow({
                 />
               </div>
             ) : (
-              <Card>
-                <CardContent className="p-4 text-sm text-gray-500">
-                  No evidence matrix has been computed yet. Use Compute Scores to generate
-                  the deterministic breakdown for this candidate.
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={Shield}
+                title="No evidence matrix computed"
+                description="Generate the deterministic breakdown before reviewing this candidate."
+                actionLabel="Compute Scores"
+                onAction={onComputeScores}
+              />
             )}
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
-              <Button size="sm" className="gap-1.5 h-7 text-xs">
+              <Button size="sm" variant="secondary" className="gap-1.5 h-7 text-xs">
                 <UserCheck className="h-3 w-3" />
                 Shortlist
               </Button>
@@ -786,20 +837,27 @@ function CandidateRow({
                 <Mail className="h-3 w-3" />
                 Contact
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="gap-1.5 h-7 text-xs text-red-500 hover:text-red-600"
-                disabled={isSnapshotting}
-                onClick={snapshotNotReady}
-              >
-                {isSnapshotting ? (
+              {isSnapshotting ? (
+                <DisabledTooltipButton
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1.5 h-7 text-xs text-red-500"
+                  disabledReason="Rejection snapshot is being saved."
+                >
                   <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
+                  Not Ready
+                </DisabledTooltipButton>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1.5 h-7 text-xs text-red-500 hover:text-red-600"
+                  onClick={snapshotNotReady}
+                >
                   <UserX className="h-3 w-3" />
-                )}
-                Not Ready
-              </Button>
+                  Not Ready
+                </Button>
+              )}
               <span className="ml-auto text-[10px] text-gray-400">
                 Updated{" "}
                 {new Date(interaction.updatedAt).toLocaleDateString()}

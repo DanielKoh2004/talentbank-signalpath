@@ -108,7 +108,7 @@ model EvidenceClaim {
   provenanceStatus     String // repo_backed | artifact_backed | document_backed | reviewer_confirmed | self_claimed | unmapped
   evidenceQualityScore Int       @default(0) // 0-5
   sourceSpan           String? // quote from artifact
-  confidence           Float     @default(0.5)
+  confidence           Float?    @default(0.5)
   candidateStatus      String    @default("pending") // pending | accepted | edited | rejected
   visibility           String    @default("private") // private | shareable_summary | shareable_artifact
   createdAt            DateTime  @default(now())

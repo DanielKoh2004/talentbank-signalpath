@@ -8,6 +8,8 @@ import { useExtractionJob } from "@/hooks/useExtractionJob";
 import { ArtifactUpload } from "@/components/portfolio/ArtifactUpload";
 import { ArtifactCard } from "@/components/portfolio/ArtifactCard";
 import { ClaimCard } from "@/components/portfolio/ClaimCard";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { LivingCV } from "@/components/portfolio/LivingCV";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +24,7 @@ import {
   Clock,
   AlertTriangle,
   Upload,
+  FileUp,
   Sparkles,
 } from "lucide-react";
 
@@ -44,7 +47,8 @@ export default function PortfolioPage() {
 
   // Track the latest extraction job for polling
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
-  const { trigger, isTriggering } = useExtractionJob(activeJobId);
+  const { job, trigger, isTriggering } = useExtractionJob(activeJobId);
+  const [activeTab, setActiveTab] = useState("inbox");
 
   // Skill map for display (loaded from API)
   const [skillMap, setSkillMap] = useState<Record<string, SkillInfo>>({});
@@ -108,6 +112,12 @@ export default function PortfolioPage() {
     [candidateId, upload]
   );
 
+  const isExtractionActive =
+    isUploading ||
+    isTriggering ||
+    job?.status === "queued" ||
+    job?.status === "processing";
+
   // Compute stats
   const pendingClaims = claims.filter((c) => c.candidateStatus === "pending");
   const acceptedClaims = claims.filter(
@@ -155,15 +165,27 @@ export default function PortfolioPage() {
           </p>
         </div>
         {pendingClaims.length > 0 && (
-          <Button
-            onClick={() => acceptAll(pendingClaims.map((c) => c.id))}
-            disabled={isUpdating}
-            className="gap-1.5"
-            size="sm"
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Accept All ({pendingClaims.length})
-          </Button>
+          isUpdating ? (
+            <DisabledTooltipButton
+              variant="outline"
+              className="gap-1.5"
+              size="sm"
+              disabledReason="Claim updates are already in progress."
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Accept All ({pendingClaims.length})
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              onClick={() => acceptAll(pendingClaims.map((c) => c.id))}
+              variant="outline"
+              className="gap-1.5"
+              size="sm"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Accept All ({pendingClaims.length})
+            </Button>
+          )
         )}
       </div>
 
@@ -199,7 +221,7 @@ export default function PortfolioPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left column: Evidence management */}
         <div className="flex flex-col gap-4">
-          <Tabs defaultValue="inbox">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full">
               <TabsTrigger value="inbox" className="flex-1 gap-1.5">
                 <Inbox className="h-3.5 w-3.5" />
@@ -223,14 +245,13 @@ export default function PortfolioPage() {
             {/* Evidence Inbox */}
             <TabsContent value="inbox" className="mt-4 space-y-3">
               {pendingClaims.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                    <Inbox className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No pending claims. Upload an artifact to get started.
-                    </p>
-                  </CardContent>
-                </Card>
+                <EmptyState
+                  icon={FileUp}
+                  title="No claims awaiting review"
+                  description="Upload evidence so TalentVault can extract claims for your Living Portfolio."
+                  actionLabel="Upload Evidence"
+                  onAction={() => setActiveTab("artifacts")}
+                />
               ) : (
                 pendingClaims.map((claim) => (
                   <ClaimCard
@@ -250,7 +271,7 @@ export default function PortfolioPage() {
             <TabsContent value="artifacts" className="mt-4 space-y-4">
               <ArtifactUpload
                 onUpload={handleUpload}
-                isUploading={isUploading || isTriggering}
+                isUploading={Boolean(isExtractionActive)}
               />
 
               {/* Artifact list */}
@@ -274,14 +295,13 @@ export default function PortfolioPage() {
             {/* All claims */}
             <TabsContent value="all" className="mt-4 space-y-3">
               {claims.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center p-8 text-center">
-                    <FileText className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No claims yet. Upload artifacts to begin extraction.
-                    </p>
-                  </CardContent>
-                </Card>
+                <EmptyState
+                  icon={FileText}
+                  title="No evidence claims yet"
+                  description="Start with a certificate, project, case study, or pasted project summary."
+                  actionLabel="Upload Evidence"
+                  onAction={() => setActiveTab("artifacts")}
+                />
               ) : (
                 <>
                   <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
@@ -319,6 +339,7 @@ export default function PortfolioPage() {
             candidateName={persona.name}
             candidateDescription={persona.description}
             skillMap={skillMap}
+            onAddEvidence={() => setActiveTab("artifacts")}
           />
         </div>
       </div>

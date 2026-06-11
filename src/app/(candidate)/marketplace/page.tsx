@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
 import { OpportunityCard } from "@/components/marketplace/OpportunityCard";
 import { ReadinessMatrix } from "@/components/shared/ReadinessMatrix";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,6 +75,7 @@ type FilterTab = "all" | "interested" | "high_readiness";
 
 export default function MarketplacePage() {
   const { persona } = usePersona();
+  const router = useRouter();
   const candidateId = persona.role === "candidate" ? "profile_aisha" : null;
 
   const [roles, setRoles] = useState<EnrichedRole[]>([]);
@@ -373,18 +376,27 @@ export default function MarketplacePage() {
 
       {/* Role cards */}
       {filteredRoles.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <Search className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {filter === "interested"
-                ? "You haven't expressed interest in any roles yet."
-                : filter === "high_readiness"
-                  ? "No roles with high readiness. Build your evidence in your Portfolio."
-                  : "No active roles found in the marketplace."}
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={filter === "high_readiness" ? TrendingUp : Search}
+          title={
+            filter === "interested"
+              ? "No roles saved yet"
+              : filter === "high_readiness"
+                ? "No high-readiness roles yet"
+                : "No active roles in the marketplace"
+          }
+          description={
+            filter === "interested"
+              ? "Browse all roles and express interest when a match looks worth exploring."
+              : filter === "high_readiness"
+                ? "Add more evidence to your Living Portfolio to improve role readiness."
+                : "Refresh the marketplace or ask an employer persona to create a role."
+          }
+          actionLabel={filter === "high_readiness" ? "Open Portfolio" : "Show All Roles"}
+          onAction={() =>
+            filter === "high_readiness" ? router.push("/portfolio") : setFilter("all")
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredRoles.map((role) => (

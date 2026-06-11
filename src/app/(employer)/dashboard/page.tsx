@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePersona } from "@/providers/PersonaProvider";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -128,19 +129,15 @@ export default function DashboardPage() {
         </div>
 
         {roles.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <Briefcase className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-              <p className="text-sm text-gray-500">
-                No roles created yet. Create a role brief to start receiving candidate interest.
-              </p>
-              <Link href="/roles" className="mt-3">
-                <Button size="sm" className="text-xs">
-                  Create Your First Role
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Briefcase}
+            title="No roles created yet"
+            description="Create a role brief to start receiving candidate interest and auditable match scores."
+            actionLabel="Create Your First Role"
+            onAction={() => {
+              window.location.href = "/roles";
+            }}
+          />
         ) : (
           <div className="space-y-3">
             {roles.map((role: RoleData) => (

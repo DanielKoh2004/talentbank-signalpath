@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
@@ -178,7 +179,7 @@ export function OpportunityCard({
 
         {/* Skills preview */}
         <div className="flex flex-wrap gap-1">
-          {role.requirements.slice(0, 6).map((req) => (
+          {role.requirements.slice(0, 3).map((req) => (
             <Badge
               key={req.skillId}
               variant="secondary"
@@ -192,9 +193,9 @@ export function OpportunityCard({
               {req.displayLabel || req.skillName}
             </Badge>
           ))}
-          {role.requirements.length > 6 && (
+          {role.requirements.length > 3 && (
             <Badge variant="secondary" className="text-[10px] text-gray-400">
-              +{role.requirements.length - 6}
+              +{role.requirements.length - 3} more
             </Badge>
           )}
         </div>
@@ -211,28 +212,40 @@ export function OpportunityCard({
           {variant === "candidate" && (
             <div className="flex items-center gap-2">
               {!isInterested ? (
-                <Button
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onInterest?.(role.id);
-                  }}
-                  disabled={interestLoading}
-                >
-                  <Heart className="h-3 w-3" />
-                  Express Interest
-                </Button>
+                interestLoading ? (
+                  <DisabledTooltipButton
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 text-xs gap-1"
+                    disabledReason="Interest signal is being saved."
+                  >
+                    <Heart className="h-3 w-3" />
+                    Express Interest
+                  </DisabledTooltipButton>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 text-xs gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onInterest?.(role.id);
+                    }}
+                  >
+                    <Heart className="h-3 w-3" />
+                    Express Interest
+                  </Button>
+                )
               ) : (
-                <Button
+                <DisabledTooltipButton
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs gap-1 text-emerald-600"
-                  disabled
+                  disabledReason="You have already expressed interest in this role."
                 >
                   <CheckCircle2 className="h-3 w-3" />
                   Interest Sent
-                </Button>
+                </DisabledTooltipButton>
               )}
               <Button
                 size="sm"

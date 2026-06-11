@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -224,20 +226,27 @@ export default function UniversityDashboardPage() {
               </option>
             ))}
           </select>
-          <Button
-            onClick={refresh}
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            disabled={loading}
-          >
-            {loading ? (
+          {loading ? (
+            <DisabledTooltipButton
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabledReason="Cohort aggregates are already loading."
+            >
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
+              Refresh
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              onClick={refresh}
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+            >
               <RefreshCw className="h-3.5 w-3.5" />
-            )}
-            Refresh
-          </Button>
+              Refresh
+            </Button>
+          )}
         </div>
       </div>
 
@@ -254,12 +263,13 @@ export default function UniversityDashboardPage() {
           <p className="text-sm text-gray-500">Loading cohort aggregates...</p>
         </div>
       ) : !dashboard || !cohort ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <GraduationCap className="mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm text-gray-500">No cohort aggregates found.</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={GraduationCap}
+          title="No cohort aggregates found"
+          description="Use demo control to repair the precomputed cohort aggregates before presenting this dashboard."
+          actionLabel="Refresh Aggregates"
+          onAction={refresh}
+        />
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

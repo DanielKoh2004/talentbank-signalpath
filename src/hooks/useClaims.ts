@@ -17,7 +17,7 @@ export interface ClaimFromAPI {
   provenanceStatus: string;
   evidenceQualityScore: number;
   sourceSpan: string | null;
-  confidence: number;
+  confidence: number | null;
   candidateStatus: "pending" | "accepted" | "edited" | "rejected";
   visibility: string;
   createdAt: string;
@@ -65,6 +65,60 @@ async function updateClaim(body: {
 
 export function useClaims(candidateId: string | null, status?: string) {
   const queryClient = useQueryClient();
+  type ClaimsSnapshot = Array<[readonly unknown[], ClaimFromAPI[] | undefined]>;
+
+  function claimStatusForAction(
+    action: "accept" | "edit" | "reject"
+  ): ClaimFromAPI["candidateStatus"] {
+    if (action === "reject") return "rejected";
+    if (action === "edit") return "edited";
+    return "accepted";
+  }
+
+  async function optimisticallyUpdateClaims(input: {
+    claimIds: string[];
+    action: "accept" | "edit" | "reject";
+    editedText?: string;
+    editedSkillIds?: string[];
+  }) {
+    if (!candidateId) return { previousClaims: [] as ClaimsSnapshot };
+
+    await queryClient.cancelQueries({ queryKey: ["claims", candidateId] });
+    const previousClaims = queryClient.getQueriesData<ClaimFromAPI[]>({
+      queryKey: ["claims", candidateId],
+    });
+    const claimIdSet = new Set(input.claimIds);
+
+    queryClient.setQueriesData<ClaimFromAPI[]>(
+      { queryKey: ["claims", candidateId] },
+      (oldClaims) => {
+        if (!oldClaims) return oldClaims;
+        return oldClaims.map((claim) => {
+          if (!claimIdSet.has(claim.id)) return claim;
+          return {
+            ...claim,
+            claimText: input.editedText ?? claim.claimText,
+            normalizedSkillIds: input.editedSkillIds ?? claim.normalizedSkillIds,
+            candidateStatus: claimStatusForAction(input.action),
+            provenanceStatus:
+              input.action === "edit" && input.editedText
+                ? "self_claimed"
+                : claim.provenanceStatus,
+            confidence:
+              input.action === "edit" && input.editedText ? null : claim.confidence,
+          };
+        });
+      },
+    );
+
+    return { previousClaims };
+  }
+
+  function rollbackClaims(context?: { previousClaims: ClaimsSnapshot }) {
+    for (const [queryKey, data] of context?.previousClaims ?? []) {
+      queryClient.setQueryData(queryKey, data);
+    }
+  }
 
   const query = useQuery({
     queryKey: ["claims", candidateId, status],
@@ -75,7 +129,10 @@ export function useClaims(candidateId: string | null, status?: string) {
   const acceptMutation = useMutation({
     mutationFn: (claimId: string) =>
       updateClaim({ claimId, action: "accept" }),
-    onSuccess: () => {
+    onMutate: (claimId) =>
+      optimisticallyUpdateClaims({ claimIds: [claimId], action: "accept" }),
+    onError: (_error, _claimId, context) => rollbackClaims(context),
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["claims", candidateId] });
     },
   });
@@ -83,7 +140,10 @@ export function useClaims(candidateId: string | null, status?: string) {
   const rejectMutation = useMutation({
     mutationFn: (claimId: string) =>
       updateClaim({ claimId, action: "reject" }),
-    onSuccess: () => {
+    onMutate: (claimId) =>
+      optimisticallyUpdateClaims({ claimIds: [claimId], action: "reject" }),
+    onError: (_error, _claimId, context) => rollbackClaims(context),
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["claims", candidateId] });
     },
   });
@@ -99,7 +159,15 @@ export function useClaims(candidateId: string | null, status?: string) {
       editedSkillIds?: string[];
     }) =>
       updateClaim({ claimId, action: "edit", editedText, editedSkillIds }),
-    onSuccess: () => {
+    onMutate: ({ claimId, editedText, editedSkillIds }) =>
+      optimisticallyUpdateClaims({
+        claimIds: [claimId],
+        action: "edit",
+        editedText,
+        editedSkillIds,
+      }),
+    onError: (_error, _variables, context) => rollbackClaims(context),
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["claims", candidateId] });
     },
   });
@@ -111,7 +179,10 @@ export function useClaims(candidateId: string | null, status?: string) {
       );
       return results;
     },
-    onSuccess: () => {
+    onMutate: (claimIds) =>
+      optimisticallyUpdateClaims({ claimIds, action: "accept" }),
+    onError: (_error, _claimIds, context) => rollbackClaims(context),
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["claims", candidateId] });
     },
   });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { ArtifactFromAPI } from "@/hooks/useArtifacts";
@@ -187,19 +188,35 @@ export function ArtifactCard({
               >
                 Cancel
               </Button>
-              <Button
-                size="sm"
-                onClick={handleSubmitContent}
-                disabled={!pastedText.trim() || isSubmitting}
-                className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
+              {!pastedText.trim() || isSubmitting ? (
+                <DisabledTooltipButton
+                  size="sm"
+                  variant="secondary"
+                  className="gap-1.5"
+                  disabledReason={
+                    isSubmitting
+                      ? "Artifact content is already being submitted."
+                      : "Paste artifact content before extracting claims."
+                  }
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Send className="h-3.5 w-3.5" />
+                  )}
+                  Extract Claims
+                </DisabledTooltipButton>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleSubmitContent}
+                  className="gap-1.5"
+                >
                   <Send className="h-3.5 w-3.5" />
-                )}
-                Extract Claims
-              </Button>
+                  Extract Claims
+                </Button>
+              )}
             </div>
           </div>
         </div>

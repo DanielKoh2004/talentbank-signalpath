@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { PersonaSwitcher } from "@/components/shared/PersonaSwitcher";
 import { Button } from "@/components/ui/button";
 import {
@@ -275,27 +276,43 @@ export default function DemoControlPage() {
               )}
 
               <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
-                <Button
-                  onClick={repair}
-                  disabled={repairing}
-                  className="gap-1.5"
-                >
-                  {repairing ? (
+                {repairing ? (
+                  <DisabledTooltipButton
+                    className="gap-1.5"
+                    disabledReason="Demo repair is already running."
+                  >
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
+                    Restore Demo Scenario
+                  </DisabledTooltipButton>
+                ) : (
+                  <Button onClick={repair} className="gap-1.5">
                     <Wrench className="h-3.5 w-3.5" />
-                  )}
-                  Restore Demo Scenario
-                </Button>
-                <Button
-                  onClick={refresh}
-                  disabled={loading || repairing}
-                  variant="outline"
-                  className="gap-1.5"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Refresh Checks
-                </Button>
+                    Restore Demo Scenario
+                  </Button>
+                )}
+                {loading || repairing ? (
+                  <DisabledTooltipButton
+                    variant="outline"
+                    className="gap-1.5"
+                    disabledReason={
+                      loading
+                        ? "Demo health checks are already loading."
+                        : "Wait for demo repair to finish before refreshing."
+                    }
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Refresh Checks
+                  </DisabledTooltipButton>
+                ) : (
+                  <Button
+                    onClick={refresh}
+                    variant="outline"
+                    className="gap-1.5"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Refresh Checks
+                  </Button>
+                )}
                 <p className="text-xs text-gray-400">
                   Repair only patches known rows; run local seed before the demo if base rows are missing.
                 </p>

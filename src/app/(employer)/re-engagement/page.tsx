@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePersona } from "@/providers/PersonaProvider";
+import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -218,29 +220,52 @@ export default function ReEngagementPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => fetchEvents().catch(() => setError("Failed to refresh events"))}
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            disabled={loading || scanning}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Refresh
-          </Button>
-          <Button
-            onClick={scan}
-            size="sm"
-            className="gap-1.5"
-            disabled={scanning}
-          >
-            {scanning ? (
+          {loading || scanning ? (
+            <DisabledTooltipButton
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabledReason={
+                loading
+                  ? "Re-engagement events are still loading."
+                  : "A re-engagement scan is already running."
+              }
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              onClick={() => fetchEvents().catch(() => setError("Failed to refresh events"))}
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh
+            </Button>
+          )}
+          {scanning ? (
+            <DisabledTooltipButton
+              size="sm"
+              variant={events.length === 0 ? "outline" : "default"}
+              className="gap-1.5"
+              disabledReason="A re-engagement scan is already running."
+            >
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
+              Scan Updates
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              onClick={scan}
+              size="sm"
+              variant={events.length === 0 ? "outline" : "default"}
+              className="gap-1.5"
+            >
               <Sparkles className="h-3.5 w-3.5" />
-            )}
-            Scan Updates
-          </Button>
+              Scan Updates
+            </Button>
+          )}
         </div>
       </div>
 
@@ -289,18 +314,13 @@ export default function ReEngagementPage() {
           <p className="text-sm text-gray-500">Loading re-engagement events...</p>
         </div>
       ) : events.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <UserSearch className="mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" />
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              No candidates are ready to re-engage yet.
-            </p>
-            <p className="mt-1 max-w-md text-xs text-gray-500 dark:text-gray-400">
-              Mark a candidate as Not Ready from a role workspace, then scan after
-              their accepted evidence changes.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={UserSearch}
+          title="No candidates are ready to re-engage"
+          description="Mark a candidate as Not Ready from a role workspace, then scan after their accepted evidence changes."
+          actionLabel="Scan Updates"
+          onAction={scan}
+        />
       ) : (
         <div className="space-y-4">
           {events.map((event) => (
@@ -454,39 +474,85 @@ function ReEngagementCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 px-5 py-3 dark:border-gray-800">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1.5 text-xs"
-            disabled={isUpdating || event.status === "reviewed"}
-            onClick={() => onStatusChange("reviewed")}
-          >
-            {isUpdating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
+          {isUpdating || event.status === "reviewed" ? (
+            <DisabledTooltipButton
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1.5 text-xs"
+              disabledReason={
+                isUpdating
+                  ? "Status update is already in progress."
+                  : "This event is already marked reviewed."
+              }
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ShieldCheck className="h-3.5 w-3.5" />
+              )}
+              Mark Reviewed
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => onStatusChange("reviewed")}
+            >
               <ShieldCheck className="h-3.5 w-3.5" />
-            )}
-            Mark Reviewed
-          </Button>
-          <Button
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            disabled={isUpdating || event.status === "contacted"}
-            onClick={() => onStatusChange("contacted")}
-          >
-            <Mail className="h-3.5 w-3.5" />
-            Mark Contacted
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 gap-1.5 text-xs text-gray-500"
-            disabled={isUpdating || event.status === "dismissed"}
-            onClick={() => onStatusChange("dismissed")}
-          >
-            <XCircle className="h-3.5 w-3.5" />
-            Dismiss
-          </Button>
+              Mark Reviewed
+            </Button>
+          )}
+          {isUpdating || event.status === "contacted" ? (
+            <DisabledTooltipButton
+              size="sm"
+              variant="secondary"
+              className="h-8 gap-1.5 text-xs"
+              disabledReason={
+                isUpdating
+                  ? "Status update is already in progress."
+                  : "This event is already marked contacted."
+              }
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Mark Contacted
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => onStatusChange("contacted")}
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Mark Contacted
+            </Button>
+          )}
+          {isUpdating || event.status === "dismissed" ? (
+            <DisabledTooltipButton
+              size="sm"
+              variant="ghost"
+              className="h-8 gap-1.5 text-xs text-gray-500"
+              disabledReason={
+                isUpdating
+                  ? "Status update is already in progress."
+                  : "This event is already dismissed."
+              }
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              Dismiss
+            </DisabledTooltipButton>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 gap-1.5 text-xs text-gray-500"
+              onClick={() => onStatusChange("dismissed")}
+            >
+              <XCircle className="h-3.5 w-3.5" />
+              Dismiss
+            </Button>
+          )}
           <span className="ml-auto text-[10px] text-gray-400">
             Created {new Date(event.createdAt).toLocaleDateString()}
           </span>
