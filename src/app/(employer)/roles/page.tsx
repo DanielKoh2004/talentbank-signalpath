@@ -6,6 +6,9 @@ import { usePersona } from "@/providers/PersonaProvider";
 import { OpportunityCard } from "@/components/marketplace/OpportunityCard";
 import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { FilterPill } from "@/components/shared/FilterPill";
+import { NextStepPanel } from "@/components/shared/NextStepPanel";
+import { SearchBand } from "@/components/shared/SearchBand";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,6 +98,11 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "draft">(
+    "all"
+  );
 
   const loadRoles = useCallback(async () => {
     if (!employerId) return;
@@ -151,6 +159,34 @@ export default function RolesPage() {
     (sum, r) => sum + r.requirements.length,
     0
   );
+  const filteredRoles = roles.filter((role) => {
+    if (statusFilter !== "all" && role.status !== statusFilter) return false;
+    const normalizedKeyword = keyword.trim().toLowerCase();
+    const normalizedLocation = locationQuery.trim().toLowerCase();
+    const haystack = [
+      role.title,
+      role.roleFamilyName,
+      role.description,
+      role.workMode,
+      ...role.requirements.map((req) => req.displayLabel ?? req.skillName),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    if (normalizedKeyword && !haystack.includes(normalizedKeyword)) {
+      return false;
+    }
+
+    if (
+      normalizedLocation &&
+      !(role.location ?? "").toLowerCase().includes(normalizedLocation)
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 
   // Not-employer guard
   if (!employerId) {
@@ -219,7 +255,7 @@ export default function RolesPage() {
           </Button>
           <Button
             size="sm"
-            variant={roles.length === 0 ? "outline" : "default"}
+            variant="default"
             className="gap-1.5"
             onClick={() => setCreateOpen(true)}
           >
@@ -228,6 +264,37 @@ export default function RolesPage() {
           </Button>
         </div>
       </div>
+
+      <SearchBand
+        title="Manage role briefs"
+        description="Search roles by title, location, work mode, or taxonomy skill before reviewing candidates."
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        location={locationQuery}
+        onLocationChange={setLocationQuery}
+        keywordPlaceholder="Search role, family, skill..."
+        locationPlaceholder="Location"
+        showAction={false}
+      >
+        {(["all", "active", "draft"] as const).map((item) => (
+          <FilterPill
+            key={item}
+            active={statusFilter === item}
+            onClick={() => setStatusFilter(item)}
+          >
+            {item === "all" ? "All roles" : item}
+          </FilterPill>
+        ))}
+      </SearchBand>
+
+      <NextStepPanel
+        steps={[
+          "Create a role brief.",
+          "Open its workspace.",
+          "Compute matches and review proof.",
+        ]}
+        icon={Briefcase}
+      />
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-4">
@@ -260,18 +327,31 @@ export default function RolesPage() {
           actionLabel="Create Role"
           onAction={() => setCreateOpen(true)}
         />
+      ) : filteredRoles.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="No roles match these filters"
+          description="Clear the search fields or switch back to all roles."
+          actionLabel="Show All Roles"
+          onAction={() => {
+            setKeyword("");
+            setLocationQuery("");
+            setStatusFilter("all");
+          }}
+          actionVariant="outline"
+        />
       ) : (
         <div className="space-y-1.5">
           <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
             <Briefcase className="h-3.5 w-3.5" />
             Your Roles
             <Badge variant="secondary" className="text-[10px] ml-1">
-              {roles.length} role{roles.length !== 1 ? "s" : ""}
+              {filteredRoles.length} role{filteredRoles.length !== 1 ? "s" : ""}
             </Badge>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-            {roles.map((role) => (
+            {filteredRoles.map((role) => (
               <OpportunityCard
                 key={role.id}
                 role={role}

@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { NextStepPanel } from "@/components/shared/NextStepPanel";
+import { StepGuide } from "@/components/shared/StepGuide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -256,6 +258,35 @@ export default function UniversityDashboardPage() {
           {error}
         </div>
       )}
+
+      <StepGuide
+        steps={[
+          {
+            title: "What skills are missing?",
+            description: "Start with evidence gaps, not generic graduate traits.",
+            status: "current",
+          },
+          {
+            title: "Which roles are students ready for?",
+            description: "Readiness bands are stored aggregates for fast demos.",
+            status: "current",
+          },
+          {
+            title: "What should curriculum improve?",
+            description: "Use demand-linked gap cards to propose action.",
+            status: "next",
+          },
+        ]}
+      />
+
+      <NextStepPanel
+        steps={[
+          "Pick the cohort.",
+          "Review the experimentation gap.",
+          "Connect the gap back to employer role demand.",
+        ]}
+        icon={GraduationCap}
+      />
 
       {loading && !dashboard ? (
         <div className="flex flex-col items-center justify-center py-20">

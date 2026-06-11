@@ -1,32 +1,33 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
 import { OpportunityCard } from "@/components/marketplace/OpportunityCard";
-import { ReadinessMatrix } from "@/components/shared/ReadinessMatrix";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Card, CardContent } from "@/components/ui/card";
+import { FilterPill } from "@/components/shared/FilterPill";
+import { NextStepPanel } from "@/components/shared/NextStepPanel";
+import { SearchBand } from "@/components/shared/SearchBand";
+import { SplitPaneLayout } from "@/components/shared/SplitPaneLayout";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { getCandidateProfileId } from "@/lib/candidate-profile";
 import {
-  Store,
-  Loader2,
   AlertTriangle,
-  RefreshCw,
+  Building2,
+  CheckCircle2,
+  EyeOff,
   Heart,
-  TrendingUp,
-  Briefcase,
+  Loader2,
+  MapPin,
+  RefreshCw,
   Search,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
-
-// =============================================================================
-// Career Marketplace Page (Candidate)
-// Browse active roles, express interest, and track readiness per role.
-// =============================================================================
 
 interface RoleRequirement {
   id?: string;
@@ -71,33 +72,29 @@ interface EnrichedRole extends RoleData {
   candidateStatus?: string;
 }
 
-type FilterTab = "all" | "interested" | "high_readiness";
+type FilterTab = "all" | "interested" | "high_readiness" | "has_gaps";
+
+const FILTERS: Array<{ id: FilterTab; label: string }> = [
+  { id: "all", label: "All roles" },
+  { id: "interested", label: "Interested" },
+  { id: "high_readiness", label: "Strong matches" },
+  { id: "has_gaps", label: "Has skill gaps" },
+];
 
 export default function MarketplacePage() {
   const { persona } = usePersona();
   const router = useRouter();
-  const candidateId = persona.role === "candidate" ? "profile_aisha" : null;
+  const candidateId =
+    persona.role === "candidate" ? getCandidateProfileId(persona.id) : null;
 
   const [roles, setRoles] = useState<EnrichedRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [interestLoading, setInterestLoading] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterTab>("all");
-
-  // Readiness detail dialog
-  const [selectedRole, setSelectedRole] = useState<EnrichedRole | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailRequirements, setDetailRequirements] = useState<
-    Array<{
-      skillId: string;
-      skillName: string;
-      displayLabel: string;
-      importance: string;
-      status: "met" | "partial" | "gap";
-      evidenceStrength: number;
-      minimumRequired: number;
-    }>
-  >([]);
+  const [keyword, setKeyword] = useState("");
+  const [location, setLocation] = useState("");
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!candidateId) return;
@@ -111,14 +108,15 @@ export default function MarketplacePage() {
       const allRoles: RoleData[] = rolesData.roles ?? [];
 
       const interactionMap = new Map<string, InteractionData>();
-      const interactionPromises = allRoles.map(async (role) => {
-        try {
-          const res = await fetch(`/api/roles/${role.id}/interest`);
-          if (res.ok) {
+      await Promise.all(
+        allRoles.map(async (role) => {
+          try {
+            const res = await fetch(`/api/roles/${role.id}/interest`);
+            if (!res.ok) return;
             const data = await res.json();
-            const interactions = data.interactions ?? [];
-            const mine = interactions.find(
-              (i: { candidateId: string }) => i.candidateId === candidateId
+            const mine = (data.interactions ?? []).find(
+              (interaction: { candidateId: string }) =>
+                interaction.candidateId === candidateId
             );
             if (mine) {
               interactionMap.set(role.id, {
@@ -129,15 +127,14 @@ export default function MarketplacePage() {
                 gapCount: mine.gapCount ?? 0,
               });
             }
+          } catch {
+            // Interest status is secondary to loading the role board.
           }
-        } catch {
-          // Non-critical
-        }
-      });
-      await Promise.all(interactionPromises);
+        })
+      );
 
-      const enriched: EnrichedRole[] = allRoles
-        .filter((r) => r.status === "active")
+      const enriched = allRoles
+        .filter((role) => role.status === "active")
         .map((role) => {
           const interaction = interactionMap.get(role.id);
           return {
@@ -147,7 +144,9 @@ export default function MarketplacePage() {
             candidateStatus: interaction?.candidateStatus,
           };
         });
+
       setRoles(enriched);
+      setSelectedRoleId((current) => current ?? enriched[0]?.id ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load marketplace");
     } finally {
@@ -160,7 +159,6 @@ export default function MarketplacePage() {
     loadData();
   }, [loadData]);
 
-  // Express interest handler
   const handleInterest = useCallback(
     async (roleId: string) => {
       if (!candidateId) return;
@@ -175,17 +173,16 @@ export default function MarketplacePage() {
         const data = await res.json();
         const interaction = data.interaction;
 
-        // Update the role in state
         setRoles((prev) =>
-          prev.map((r) =>
-            r.id === roleId
+          prev.map((role) =>
+            role.id === roleId
               ? {
-                  ...r,
+                  ...role,
                   candidateStatus: interaction.candidateStatus,
                   readinessPercent: interaction.readinessPercent,
                   gapCount: interaction.gapCount,
                 }
-              : r
+              : role
           )
         );
       } catch (err) {
@@ -197,7 +194,6 @@ export default function MarketplacePage() {
     [candidateId]
   );
 
-  // Hide role handler
   const handleHide = useCallback(
     async (roleId: string) => {
       if (!candidateId) return;
@@ -208,95 +204,95 @@ export default function MarketplacePage() {
           body: JSON.stringify({ candidateId, action: "hide" }),
         });
         if (!res.ok) throw new Error("Failed to hide role");
-
-        // Remove from visible list
-        setRoles((prev) => prev.filter((r) => r.id !== roleId));
+        setRoles((prev) => prev.filter((role) => role.id !== roleId));
+        setSelectedRoleId((current) => {
+          if (current !== roleId) return current;
+          return roles.find((role) => role.id !== roleId)?.id ?? null;
+        });
       } catch (err) {
         console.error("Hide error:", err);
       }
     },
-    [candidateId]
+    [candidateId, roles]
   );
 
-  // View role readiness detail
-  const handleView = useCallback(
-    (roleId: string) => {
-      const role = roles.find((r) => r.id === roleId);
-      if (!role) return;
-      setSelectedRole(role);
+  const filteredRoles = useMemo(() => {
+    const normalizedKeyword = keyword.trim().toLowerCase();
+    const normalizedLocation = location.trim().toLowerCase();
 
-      // Build requirements for ReadinessMatrix with mock status based on readiness %
-      const reqs = role.requirements.map((req, idx) => {
-        const totalReqs = role.requirements.length;
-        const metCount = Math.round(
-          ((role.readinessPercent ?? 0) / 100) * totalReqs
-        );
-        const status: "met" | "partial" | "gap" =
-          idx < metCount ? "met" : idx < metCount + 1 ? "partial" : "gap";
+    return roles.filter((role) => {
+      if (filter === "interested" && role.candidateStatus !== "interested") {
+        return false;
+      }
+      if (filter === "high_readiness" && (role.readinessPercent ?? 0) < 70) {
+        return false;
+      }
+      if (filter === "has_gaps" && (role.gapCount ?? 0) <= 0) {
+        return false;
+      }
 
-        return {
-          skillId: req.skillId,
-          skillName: req.skillName,
-          displayLabel: req.displayLabel ?? req.skillName,
-          importance: req.importance,
-          status,
-          evidenceStrength: status === "met" ? req.minimumEvidenceStrength : status === "partial" ? Math.max(1, req.minimumEvidenceStrength - 1) : 0,
-          minimumRequired: req.minimumEvidenceStrength,
-        };
-      });
+      const haystack = [
+        role.title,
+        role.roleFamilyName,
+        role.description,
+        role.workMode,
+        ...role.requirements.map((req) => req.displayLabel ?? req.skillName),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-      setDetailRequirements(reqs);
-      setDetailOpen(true);
-    },
-    [roles]
+      if (normalizedKeyword && !haystack.includes(normalizedKeyword)) {
+        return false;
+      }
+
+      if (
+        normalizedLocation &&
+        !(role.location ?? "").toLowerCase().includes(normalizedLocation)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [filter, keyword, location, roles]);
+
+  const selectedRole =
+    filteredRoles.find((role) => role.id === selectedRoleId) ??
+    filteredRoles[0] ??
+    null;
+
+  const interestedRoles = roles.filter(
+    (role) => role.candidateStatus === "interested"
   );
 
-  // Compute stats
-  const interestedRoles = roles.filter((r) => r.candidateStatus === "interested");
-  const rolesWithReadiness = roles.filter((r) => r.readinessPercent !== undefined);
-  const avgReadiness =
-    rolesWithReadiness.length > 0
-      ? Math.round(
-          rolesWithReadiness.reduce((sum, r) => sum + (r.readinessPercent ?? 0), 0) /
-            rolesWithReadiness.length
-        )
-      : 0;
-
-  // Filtered roles
-  const filteredRoles = roles.filter((role) => {
-    if (filter === "interested") return role.candidateStatus === "interested";
-    if (filter === "high_readiness") return (role.readinessPercent ?? 0) >= 70;
-    return true;
-  });
-
-  // Not-candidate guard
   if (!candidateId) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <AlertTriangle className="h-10 w-10 text-amber-500 mb-3" />
-        <p className="text-gray-500">
+        <AlertTriangle className="mb-3 h-10 w-10 text-amber-500" />
+        <p className="text-slate-500">
           Switch to a candidate persona to view the Career Marketplace.
         </p>
       </div>
     );
   }
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 text-indigo-500 animate-spin mb-3" />
-        <p className="text-sm text-gray-500">Loading marketplace opportunities...</p>
+        <Loader2 className="mb-3 h-8 w-8 animate-spin text-[#071f5c]" />
+        <p className="text-sm text-slate-500">
+          Loading opportunities and readiness signals...
+        </p>
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <AlertTriangle className="h-10 w-10 text-red-500" />
-        <p className="text-sm text-gray-500">{error}</p>
+        <p className="text-sm text-slate-500">{error}</p>
         <Button onClick={loadData} variant="outline" size="sm" className="gap-1.5">
           <RefreshCw className="h-3.5 w-3.5" />
           Retry
@@ -306,207 +302,272 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Store className="h-6 w-6 text-indigo-500" />
-            Career Marketplace
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Browse opportunities and see your evidence-based readiness for each role.
-          </p>
-        </div>
-        <Button onClick={loadData} variant="outline" size="sm" className="gap-1.5">
-          <RefreshCw className="h-3.5 w-3.5" />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard
-          label="Active Roles"
-          value={roles.length.toString()}
-          icon={Briefcase}
-          color="indigo"
-        />
-        <StatCard
-          label="Interested"
-          value={interestedRoles.length.toString()}
-          icon={Heart}
-          color="violet"
-        />
-        <StatCard
-          label="Avg. Readiness"
-          value={rolesWithReadiness.length > 0 ? `${avgReadiness}%` : "—"}
-          icon={TrendingUp}
-          color="emerald"
-        />
-      </div>
-
-      {/* Filter tabs */}
-      <Tabs
-        value={filter}
-        onValueChange={(v) => setFilter(v as FilterTab)}
+    <div className="space-y-6">
+      <SearchBand
+        title="Find roles that match your proof"
+        description="Search opportunities by role, industry, skill, or location. SignalPath shows how ready you are and what proof is missing."
+        keyword={keyword}
+        onKeywordChange={setKeyword}
+        location={location}
+        onLocationChange={setLocation}
+        actionLabel="Seek"
       >
-        <TabsList>
-          <TabsTrigger value="all" className="gap-1.5">
-            All
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-0.5">
-              {roles.length}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="interested" className="gap-1.5">
-            <Heart className="h-3 w-3" />
-            Interested
-            {interestedRoles.length > 0 && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-0.5">
-                {interestedRoles.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="high_readiness" className="gap-1.5">
-            <TrendingUp className="h-3 w-3" />
-            High Readiness
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+        {FILTERS.map((item) => (
+          <FilterPill
+            key={item.id}
+            active={filter === item.id}
+            onClick={() => setFilter(item.id)}
+          >
+            {item.label}
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11px]">
+              {item.id === "all"
+                ? roles.length
+                : item.id === "interested"
+                  ? interestedRoles.length
+                  : item.id === "high_readiness"
+                    ? roles.filter((role) => (role.readinessPercent ?? 0) >= 70)
+                        .length
+                    : roles.filter((role) => (role.gapCount ?? 0) > 0).length}
+            </span>
+          </FilterPill>
+        ))}
+      </SearchBand>
 
-      {/* Role cards */}
+      <NextStepPanel
+        steps={[
+          "Pick a role from the left.",
+          "Check why you match on the right.",
+          "Express interest or add proof to close gaps.",
+        ]}
+        actionLabel="Open Portfolio"
+        onAction={() => router.push("/portfolio")}
+        icon={Sparkles}
+      />
+
       {filteredRoles.length === 0 ? (
         <EmptyState
           icon={filter === "high_readiness" ? TrendingUp : Search}
-          title={
-            filter === "interested"
-              ? "No roles saved yet"
-              : filter === "high_readiness"
-                ? "No high-readiness roles yet"
-                : "No active roles in the marketplace"
-          }
-          description={
-            filter === "interested"
-              ? "Browse all roles and express interest when a match looks worth exploring."
-              : filter === "high_readiness"
-                ? "Add more evidence to your Living Portfolio to improve role readiness."
-                : "Refresh the marketplace or ask an employer persona to create a role."
-          }
-          actionLabel={filter === "high_readiness" ? "Open Portfolio" : "Show All Roles"}
-          onAction={() =>
-            filter === "high_readiness" ? router.push("/portfolio") : setFilter("all")
-          }
+          title="No roles match these filters"
+          description="Clear the search or upload more proof in your Living Portfolio to improve readiness."
+          actionLabel="Show All Roles"
+          onAction={() => {
+            setKeyword("");
+            setLocation("");
+            setFilter("all");
+          }}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredRoles.map((role) => (
-            <OpportunityCard
-              key={role.id}
-              role={role}
-              variant="candidate"
-              onInterest={handleInterest}
-              onHide={handleHide}
-              onView={handleView}
-              interestLoading={interestLoading === role.id}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Readiness detail dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <Briefcase className="h-5 w-5 text-indigo-500" />
-              {selectedRole?.title}
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedRole && (
-            <div className="space-y-4">
-              {/* Role description */}
-              {selectedRole.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedRole.description}
-                </p>
-              )}
-
-              {/* Readiness matrix */}
-              {selectedRole.readinessPercent !== undefined ? (
-                <ReadinessMatrix
-                  requirements={detailRequirements}
-                  readinessPercent={selectedRole.readinessPercent}
-                  gapCount={selectedRole.gapCount ?? 0}
-                  metCount={
-                    detailRequirements.filter((r) => r.status === "met").length
-                  }
-                  variant="candidate"
-                />
-              ) : (
-                <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-6 text-center">
-                  <p className="text-sm text-gray-500">
-                    Express interest to compute your readiness for this role.
+        <SplitPaneLayout
+          list={
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-black text-slate-950 dark:text-white">
+                    {filteredRoles.length} role
+                    {filteredRoles.length !== 1 ? "s" : ""} found
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Select a card to inspect the evidence fit.
                   </p>
-                  <Button
-                    size="sm"
-                    className="mt-3 gap-1.5"
-                    onClick={() => {
-                      setDetailOpen(false);
-                      handleInterest(selectedRole.id);
-                    }}
-                  >
-                    <Heart className="h-3.5 w-3.5" />
-                    Express Interest
-                  </Button>
                 </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                <Button
+                  onClick={loadData}
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Refresh
+                </Button>
+              </div>
+              {filteredRoles.map((role) => (
+                <OpportunityCard
+                  key={role.id}
+                  role={role}
+                  variant="candidate"
+                  onInterest={handleInterest}
+                  onHide={handleHide}
+                  onView={setSelectedRoleId}
+                  interestLoading={interestLoading === role.id}
+                  className={cn(
+                    selectedRole?.id === role.id &&
+                      "ring-2 ring-[#071f5c] dark:ring-blue-300"
+                  )}
+                />
+              ))}
+            </>
+          }
+          detail={
+            selectedRole ? (
+              <RoleDetailPanel
+                role={selectedRole}
+                interestLoading={interestLoading === selectedRole.id}
+                onInterest={() => handleInterest(selectedRole.id)}
+                onHide={() => handleHide(selectedRole.id)}
+              />
+            ) : null
+          }
+        />
+      )}
     </div>
   );
 }
 
-// --- Stat Card sub-component ---
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  color,
+function RoleDetailPanel({
+  role,
+  interestLoading,
+  onInterest,
+  onHide,
 }: {
-  label: string;
-  value: string;
-  icon: React.ElementType;
-  color: "indigo" | "amber" | "violet" | "emerald";
+  role: EnrichedRole;
+  interestLoading: boolean;
+  onInterest: () => void;
+  onHide: () => void;
 }) {
-  const colorMap = {
-    indigo: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    violet: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-    emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  };
+  const isInterested = role.candidateStatus === "interested";
+  const readiness = role.readinessPercent;
+  const readinessColor =
+    readiness == null
+      ? "text-slate-400"
+      : readiness >= 70
+        ? "text-emerald-600"
+        : readiness >= 40
+          ? "text-amber-600"
+          : "text-red-500";
 
   return (
-    <Card>
-      <CardContent className="flex items-center gap-3 p-4">
-        <div
-          className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-lg",
-            colorMap[color]
-          )}
-        >
-          <Icon className="h-5 w-5" />
+    <Card className="overflow-hidden border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <div className="h-3 bg-[#071f5c]" />
+      <CardContent className="space-y-6 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              {role.roleFamilyName && (
+                <Badge variant="secondary">{role.roleFamilyName}</Badge>
+              )}
+              {isInterested && (
+                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                  Interest sent
+                </Badge>
+              )}
+            </div>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">
+              {role.title}
+            </h2>
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600 dark:text-slate-300">
+              {role.location && (
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  {role.location}
+                </span>
+              )}
+              {role.workMode && (
+                <span className="flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4" />
+                  {role.workMode}
+                </span>
+              )}
+              {role.salaryMin != null && role.salaryMax != null && (
+                <span>
+                  {role.salaryCurrency} {role.salaryMin.toLocaleString()}-
+                  {role.salaryMax.toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-slate-50 p-4 text-center dark:bg-slate-900">
+            <p className={cn("text-3xl font-black tabular-nums", readinessColor)}>
+              {readiness != null ? `${readiness}%` : "--"}
+            </p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              Readiness
+            </p>
+          </div>
         </div>
+
+        {readiness != null ? (
+          <div className="space-y-2">
+            <Progress value={readiness} className="h-2" />
+            <p className="text-sm text-slate-500">
+              {role.gapCount && role.gapCount > 0
+                ? `${role.gapCount} proof gap${role.gapCount !== 1 ? "s" : ""} to close before this becomes a stronger match.`
+                : "Your current proof covers the visible requirements for this role."}
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700">
+            Express interest to calculate a readiness snapshot for this role.
+          </div>
+        )}
+
+        {role.description && (
+          <div>
+            <h3 className="text-sm font-black text-slate-950 dark:text-white">
+              What you would do
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {role.description}
+            </p>
+          </div>
+        )}
+
         <div>
-          <p className="text-lg font-bold text-gray-900 dark:text-gray-100 tabular-nums">
-            {value}
-          </p>
-          <p className="text-[11px] text-gray-500 dark:text-gray-400">
-            {label}
-          </p>
+          <h3 className="text-sm font-black text-slate-950 dark:text-white">
+            Skills this role asks for
+          </h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {role.requirements.map((requirement) => (
+              <Badge
+                key={requirement.skillId}
+                variant={
+                  requirement.importance === "required"
+                    ? "default"
+                    : "secondary"
+                }
+                className={cn(
+                  "rounded-full",
+                  requirement.importance === "required" &&
+                    "bg-[#071f5c] text-white hover:bg-[#071f5c]"
+                )}
+              >
+                {requirement.displayLabel ?? requirement.skillName}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row">
+          {isInterested ? (
+            <Button className="gap-2" disabled>
+              <CheckCircle2 className="h-4 w-4" />
+              Interest Sent
+            </Button>
+          ) : (
+            <Button
+              className="gap-2"
+              onClick={onInterest}
+              disabled={interestLoading}
+            >
+              {interestLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Heart className="h-4 w-4" />
+              )}
+              Express Interest
+            </Button>
+          )}
+          <Button variant="outline" className="gap-2" onClick={onHide}>
+            <EyeOff className="h-4 w-4" />
+            Hide Role
+          </Button>
+          <a
+            href="/portfolio"
+            className={buttonVariants({ variant: "secondary" })}
+          >
+            Add More Proof
+          </a>
         </div>
       </CardContent>
     </Card>

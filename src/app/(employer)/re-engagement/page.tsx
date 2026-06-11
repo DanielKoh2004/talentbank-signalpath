@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePersona } from "@/providers/PersonaProvider";
 import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { NextStepPanel } from "@/components/shared/NextStepPanel";
+import { StepGuide } from "@/components/shared/StepGuide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -207,15 +209,15 @@ export default function ReEngagementPage() {
               Module 6
             </Badge>
             <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Talent Re-Engagement
+              Ready to Reconnect
             </span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Reconnect When the Evidence Changes
+            Ready to Reconnect
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-            Candidates marked not ready are only surfaced again when a live score
-            improves by at least 10 points against the stored rejection snapshot.
+            These candidates improved after being marked not ready. Review the
+            score delta, then approve contact only when the evidence is clear.
           </p>
         </div>
 
@@ -286,6 +288,35 @@ export default function ReEngagementPage() {
           {error ?? notice}
         </div>
       )}
+
+      <StepGuide
+        steps={[
+          {
+            title: "Scan updates",
+            description: "Find candidates whose evidence improved after rejection.",
+            status: "current",
+          },
+          {
+            title: "Review delta",
+            description: "Compare the old snapshot with the live score.",
+            status: events.length > 0 ? "current" : "next",
+          },
+          {
+            title: "Approve contact",
+            description: "HR reviews the draft before any outreach happens.",
+            status: "next",
+          },
+        ]}
+      />
+
+      <NextStepPanel
+        steps={[
+          "Run Scan Updates.",
+          "Open each candidate delta.",
+          "Mark reviewed or contacted after HR approval.",
+        ]}
+        icon={UserSearch}
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <SummaryCard

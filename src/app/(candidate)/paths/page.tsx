@@ -6,9 +6,12 @@ import { usePersona } from "@/providers/PersonaProvider";
 import { PathCard } from "@/components/paths/PathCard";
 import { CareerShapeCard } from "@/components/paths/CareerShapeCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { NextStepPanel } from "@/components/shared/NextStepPanel";
+import { StepGuide } from "@/components/shared/StepGuide";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { getCandidateProfileId } from "@/lib/candidate-profile";
 import {
   Compass,
   Loader2,
@@ -30,7 +33,8 @@ type PathsData = any;
 export default function PathsPage() {
   const { persona } = usePersona();
   const router = useRouter();
-  const candidateId = persona.role === "candidate" ? "profile_aisha" : null;
+  const candidateId =
+    persona.role === "candidate" ? getCandidateProfileId(persona.id) : null;
 
   const [data, setData] = useState<PathsData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -134,6 +138,38 @@ export default function PathsPage() {
           Refresh
         </Button>
       </div>
+
+      {/* Stats row */}
+      <StepGuide
+        steps={[
+          {
+            title: "Read your current shape",
+            description: "SignalPath summarizes what your accepted proof says today.",
+            status: "done",
+          },
+          {
+            title: "Compare realistic paths",
+            description: "Each path shows readiness, trade-offs, and uncertainty.",
+            status: "current",
+          },
+          {
+            title: "Add next proof",
+            description: "Close gaps from Portfolio instead of guessing what to do.",
+            status: "next",
+          },
+        ]}
+      />
+
+      <NextStepPanel
+        steps={[
+          "Open a path card.",
+          "Check the missing skills.",
+          "Upload proof for the strongest gap.",
+        ]}
+        actionLabel="Open Portfolio"
+        onAction={() => router.push("/portfolio")}
+        icon={Map}
+      />
 
       {/* Stats row */}
       <div className="grid grid-cols-4 gap-4">

@@ -11,11 +11,14 @@ import { ClaimCard } from "@/components/portfolio/ClaimCard";
 import { DisabledTooltipButton } from "@/components/shared/DisabledTooltipButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LivingCV } from "@/components/portfolio/LivingCV";
+import { NextStepPanel } from "@/components/shared/NextStepPanel";
+import { StepGuide } from "@/components/shared/StepGuide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getCandidateProfileId } from "@/lib/candidate-profile";
 import {
   FolderOpen,
   Inbox,
@@ -40,7 +43,8 @@ interface SkillInfo {
 
 export default function PortfolioPage() {
   const { persona } = usePersona();
-  const candidateId = persona.role === "candidate" ? "profile_aisha" : null;
+  const candidateId =
+    persona.role === "candidate" ? getCandidateProfileId(persona.id) : null;
 
   const { artifacts, upload, isUploading, lastUpload, provideContent, isProviding, lastProvide } = useArtifacts(candidateId);
   const { claims, accept, reject, edit, acceptAll, isUpdating } = useClaims(candidateId);
@@ -188,6 +192,59 @@ export default function PortfolioPage() {
           )
         )}
       </div>
+
+      {/* Stats row */}
+      <StepGuide
+        steps={[
+          {
+            title: "Upload proof",
+            description: "Add a project, case study, certificate, or pasted summary.",
+            status: artifacts.length > 0 ? "done" : "current",
+          },
+          {
+            title: "Review claims",
+            description: "Accept only the statements you are comfortable standing behind.",
+            status:
+              artifacts.length === 0
+                ? "next"
+                : pendingClaims.length > 0
+                  ? "current"
+                  : "done",
+          },
+          {
+            title: "View Living CV",
+            description: "Your CV updates from accepted proof, not guesswork.",
+            status: acceptedClaims.length > 0 ? "current" : "next",
+          },
+        ]}
+      />
+
+      <NextStepPanel
+        steps={
+          pendingClaims.length > 0
+            ? [
+                "Review extracted claims.",
+                "Accept accurate claims.",
+                "Open Marketplace to compare role readiness.",
+              ]
+            : artifacts.length === 0
+              ? [
+                  "Upload one piece of proof.",
+                  "Wait for extracted claims.",
+                  "Accept the claims that are true.",
+                ]
+              : [
+                  "Add more proof if key skills are missing.",
+                  "Open Marketplace.",
+                  "Express interest in a role.",
+                ]
+        }
+        actionLabel={artifacts.length === 0 ? "Upload Evidence" : "Open Marketplace"}
+        onAction={() =>
+          artifacts.length === 0 ? setActiveTab("artifacts") : (window.location.href = "/marketplace")
+        }
+        icon={Upload}
+      />
 
       {/* Stats row */}
       <div className="grid grid-cols-4 gap-4">
