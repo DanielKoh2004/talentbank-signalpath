@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalPath — Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF9F4;
+    --cream-2:#F4F1E8;
+    --ink:#1A1A1A;
+    --ink-soft:#3A3A38;
+    --gold:#B8860B;
+    --gold-bright:#C8901A;
+    --gold-wash:#FBF3DF;
+    --muted:#8A8A7A;
+    --line:#E5E0D4;
+    --card:#FFFFFF;
+    --good:#2E7D52;
+    --bad:#B23B3B;
+    --sans:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);
+    background:var(--cream);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+
+  /* ---------- deck shell ---------- */
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{
+    position:absolute;inset:0;
+    display:none;
+    padding:5vh 7vw 9vh;
+    overflow-y:auto;
+    flex-direction:column;
+    animation:fade .45s ease;
+  }
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .slide-inner{max-width:1100px;margin:auto;width:100%}
+
+  /* ---------- typography ---------- */
+  .kicker{
+    font-family:var(--mono);
+    font-size:.72rem;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:500;
+    margin-bottom:1.1rem;
+    display:flex;align-items:center;gap:.6rem;
+  }
+  .kicker::before{content:"";width:26px;height:1.5px;background:var(--gold)}
+  h1{
+    font-size:clamp(2rem,4.4vw,3.6rem);
+    font-weight:800;
+    line-height:1.04;
+    letter-spacing:-.02em;
+    margin-bottom:1.4rem;
+  }
+  h1 .hl{color:var(--gold)}
+  .lead{
+    font-size:clamp(1rem,1.4vw,1.22rem);
+    color:var(--ink-soft);
+    line-height:1.55;
+    max-width:60ch;
+    margin-bottom:1.8rem;
+  }
+  p{line-height:1.55;color:var(--ink-soft)}
+  strong{color:var(--ink);font-weight:700}
+  em{color:var(--gold);font-style:normal;font-weight:600}
+  .note{font-size:.82rem;color:var(--muted);font-style:italic;margin-top:.5rem}
+
+  .quote{
+    border-left:3px solid var(--gold);
+    background:var(--gold-wash);
+    padding:1.1rem 1.4rem;
+    border-radius:0 8px 8px 0;
+    font-size:clamp(1rem,1.5vw,1.25rem);
+    font-weight:600;color:var(--ink);
+    margin-top:1.6rem;line-height:1.45;
+  }
+  .quote small{display:block;font-weight:400;font-size:.8rem;color:var(--muted);margin-top:.5rem;font-style:italic}
+
+  /* ---------- cards / grids ---------- */
+  .grid{display:grid;gap:1rem;margin:1.4rem 0}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:1.2rem 1.3rem;
+  }
+  .card .clabel{
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:.5rem;
+  }
+  .card h3{font-size:1.05rem;font-weight:700;margin-bottom:.4rem}
+  .card p{font-size:.9rem}
+
+  /* ---------- tables ---------- */
+  table{width:100%;border-collapse:collapse;margin:1.2rem 0;font-size:.9rem}
+  th,td{text-align:left;padding:.7rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  td strong{color:var(--ink)}
+  .stat-num{color:var(--gold);font-weight:800}
+
+  /* ---------- stat row ---------- */
+  .stats{display:flex;gap:1rem;margin-top:1.6rem;flex-wrap:wrap}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.3rem;min-width:130px}
+  .stat .v{font-size:1.9rem;font-weight:800;color:var(--ink);line-height:1}
+  .stat .v .u{color:var(--gold)}
+  .stat .l{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.45rem}
+
+  /* ---------- gap boxes (slide 3/4) ---------- */
+  .pipeline{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);margin:1.2rem 0 .4rem}
+  .pipeline .step{background:var(--cream-2);border:1px solid var(--line);border-radius:6px;padding:.4rem .7rem;font-weight:500}
+  .pipeline .arr{color:var(--gold);font-weight:700}
+  .gapwrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+  .gapbox{border:1.5px dashed var(--bad);border-radius:12px;padding:1.1rem 1.2rem;background:#fdf6f5}
+  .gapbox.fixed{border:1.5px solid var(--good);background:#f3faf6}
+  .gapbox .gh{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:.7rem;display:flex;justify-content:space-between;align-items:center}
+  .gapbox .gh .tag{color:var(--bad)}
+  .gapbox.fixed .gh .tag{color:var(--good)}
+  .gapbox ul{list-style:none;font-size:.86rem;color:var(--ink-soft)}
+  .gapbox li{padding:.18rem 0;display:flex;gap:.5rem;line-height:1.4}
+  .gapbox.fixed li::before{content:"✓";color:var(--good);font-weight:700}
+  .gapbox .verdict{margin-top:.8rem;font-family:var(--mono);font-size:.78rem;font-weight:700;text-align:center;padding:.5rem;border-radius:6px;background:#fbeaea;color:var(--bad)}
+  .gapbox.fixed .verdict{background:#e6f4ec;color:var(--good)}
+  .gapbox .sub{font-family:var(--mono);font-size:.66rem;color:var(--muted);text-align:center;margin-top:.5rem;letter-spacing:.05em}
+
+  /* ---------- evidence graph (slide 5) ---------- */
+  .arch{display:flex;flex-direction:column;align-items:center;gap:.7rem;margin:1.4rem 0}
+  .node{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem 1.1rem;text-align:center;font-size:.85rem;max-width:420px}
+  .node .nl{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.25rem}
+  .graphnode{background:var(--ink);color:var(--cream);border:none;padding:1rem 1.4rem;border-radius:12px;text-align:center;max-width:480px}
+  .graphnode .nl{color:var(--gold-bright)}
+  .graphnode .sub{font-size:.74rem;color:#c9c6bd;margin-top:.2rem}
+  .down{color:var(--gold);font-size:1.3rem;font-weight:700}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;width:100%;max-width:760px}
+
+  /* ---------- quadrant (slide 10) ---------- */
+  .quad{position:relative;border:1px solid var(--line);border-radius:14px;background:var(--card);height:300px;margin:1.2rem 0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+  .quad .cell{padding:1rem;font-size:.8rem;border:1px dashed var(--line);display:flex;flex-direction:column;justify-content:center}
+  .quad .cell.win{background:var(--gold-wash);border:1px solid var(--gold)}
+  .quad .cell .who{font-weight:700;color:var(--ink);margin-bottom:.2rem}
+  .quad .cell .why{color:var(--muted);font-size:.74rem}
+  .quad .star{color:var(--gold);font-weight:800}
+  .axis-y{position:absolute;left:-2.6rem;top:50%;transform:rotate(-90deg);font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .axis-x{position:absolute;bottom:-1.8rem;width:100%;text-align:center;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+  /* ---------- funnel (slide 11) ---------- */
+  .funnel{margin:1.2rem 0;display:flex;flex-direction:column;gap:.6rem}
+  .fbar{display:flex;align-items:center;gap:1rem}
+  .fbar .bar{height:34px;background:var(--gold-bright);border-radius:6px;display:flex;align-items:center;padding:0 .8rem;color:#fff;font-weight:700;font-size:.85rem;white-space:nowrap}
+  .fbar .bar.lite{background:var(--gold-wash);color:var(--gold);border:1px solid var(--gold)}
+  .fbar .cap{font-size:.85rem;color:var(--ink-soft)}
+
+  /* ---------- roadmap (slide 12) ---------- */
+  .layer{border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.3rem;margin:.7rem 0;background:var(--card)}
+  .layer.now{border-left:4px solid var(--gold)}
+  .layer.next{border-left:4px solid var(--ink)}
+  .layer.trust{border-left:4px solid var(--good);background:#f6faf7}
+  .layer .ll{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:.45rem}
+  .layer.next .ll{color:var(--ink)}
+  .layer.trust .ll{color:var(--good)}
+  .layer p{font-size:.88rem}
+  .layconnect{text-align:center;color:var(--gold);font-size:1.2rem}
+
+  /* ---------- loops (slide 13) ---------- */
+  .loops{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin:1.2rem 0}
+  .loop{border:1px solid var(--line);border-radius:14px;padding:1.3rem;background:var(--card)}
+  .loop .lt{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:1rem;text-align:center}
+  .ring{display:flex;flex-direction:column;align-items:center;gap:.35rem;font-size:.82rem}
+  .ring .r{background:var(--cream-2);border:1px solid var(--line);border-radius:8px;padding:.45rem .7rem;text-align:center;width:100%;max-width:240px;color:var(--ink-soft)}
+  .ring .ra{color:var(--gold);font-weight:700}
+  .ring .back{font-family:var(--mono);font-size:.64rem;color:var(--muted);letter-spacing:.05em}
+
+  /* ---------- big visual helpers ---------- */
+  .bignum{font-size:clamp(3rem,9vw,7rem);font-weight:900;line-height:.9;letter-spacing:-.03em;color:var(--gold)}
+  .bigrow{display:flex;gap:2.5rem;align-items:flex-end;flex-wrap:wrap;margin:2rem 0}
+  .bigitem .l{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.4rem;max-width:18ch}
+  .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:center;margin:1.8rem 0}
+  .vs .col{text-align:center}
+  .vs .mid{font-family:var(--mono);font-size:.8rem;color:var(--muted);font-weight:700}
+  .pill{display:inline-block;font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .6rem;border-radius:999px;background:var(--cream-2);color:var(--ink-soft);border:1px solid var(--line)}
+  .pill.c{background:var(--gold-wash);color:var(--gold);border-color:var(--gold)}
+  .feat{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin:1.6rem 0}
+  .feat .f{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.1rem}
+  .feat .f .fi{font-size:1.4rem;margin-bottom:.5rem}
+  .feat .f h3{font-size:.98rem;font-weight:700;margin-bottom:.3rem}
+  .feat .f p{font-size:.8rem;line-height:1.4}
+  .feat .f .pill{margin-top:.6rem}
+  @media(max-width:780px){.feat{grid-template-columns:1fr}.bigrow{gap:1.4rem}}
+
+  ul.clean{list-style:none;margin:1rem 0}
+  ul.clean li{padding:.4rem 0 .4rem 1.4rem;position:relative;line-height:1.5;color:var(--ink-soft)}
+  ul.clean li::before{content:"";position:absolute;left:0;top:.95rem;width:7px;height:7px;background:var(--gold);border-radius:50%}
+
+  .demo-box{background:var(--ink);color:var(--cream);border-radius:14px;padding:2.2rem;text-align:center;margin:1.4rem 0}
+  .demo-box .play{font-size:2.4rem;color:var(--gold-bright);margin-bottom:.6rem}
+  .demo-box .lk{font-family:var(--mono);font-size:.85rem;color:var(--gold-bright);margin-top:.8rem;word-break:break-all}
+  .demo-box p{color:#c9c6bd}
+
+  /* ---------- nav ---------- */
+  .nav{position:fixed;bottom:1.4rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:1rem;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:.5rem .9rem;z-index:50;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+  .nav button{border:none;background:none;font-size:1.1rem;color:var(--ink);cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .nav button:hover{background:var(--cream-2);color:var(--gold)}
+  .nav .count{font-family:var(--mono);font-size:.78rem;color:var(--muted);min-width:54px;text-align:center}
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--gold);z-index:60;transition:width .35s ease}
+  .pageno{position:fixed;top:1.4rem;right:2rem;font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.1em}
+  .brand{position:fixed;top:1.3rem;left:2rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);font-weight:700;z-index:60}
+  .brand .dot{color:var(--gold)}
+
+  @media(max-width:780px){
+    .g2,.g3,.gapwrap,.loops,.three,.quad{grid-template-columns:1fr}
+    .quad{height:auto}
+    .slide{padding:7vh 6vw 11vh}
+  }
+</style>
+</head>
+<body>
+<div class="brand">SignalPath<span class="dot"> ●</span> Career OS</div>
+<div class="pageno" id="pageno">01 / 14</div>
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 1 -->
+<section class="slide active">
+  <div class="slide-inner">
+    <div class="kicker">01 · The Problem</div>
+    <h1>Hiring tools break at <span class="hl">two points</span>.</h1>
+    <div class="bigrow">
+      <div class="bigitem"><div class="bignum">56%</div><div class="l">admit lying on their résumé — unverifiable</div></div>
+      <div class="bigitem"><div class="bignum">27M</div><div class="l">qualified "hidden workers" filtered out</div></div>
+      <div class="bigitem"><div class="bignum">88%</div><div class="l">of employers: ATS screens out good people, can't see why</div></div>
+    </div>
+    <div class="gapwrap">
+      <div class="gapbox"><div class="gh"><span>Gap 1 · Input</span><span class="tag">● Can't verify</span></div><div class="verdict">[ NEVER VERIFIED ]</div></div>
+      <div class="gapbox"><div class="gh"><span>Gap 2 · Output</span><span class="tag">● Can't explain</span></div><div class="verdict">[ BLACK BOX ]</div></div>
+    </div>
+    <p class="note">Sources: StandOut-CV 2024 · HBS / Accenture · Workday lawsuit 2024</p>
+  </div>
+</section>
+
+<!-- SLIDE 2 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">02 · Real World Scenario</div>
+    <h1>Meet <span class="hl">Aisha</span>.</h1>
+    <p class="lead">A University of Malaya graduate targeting a Junior Product Analyst role at DataCo.</p>
+    <ul class="clean">
+      <li>Her CV says she has "data analysis experience" and "stakeholder communication skills."</li>
+      <li>DataCo's ATS gives her a <strong>43% match score. No reason given.</strong></li>
+      <li>Aisha doesn't know which skill is missing. DataCo doesn't know if 43% is meaningful.</li>
+      <li>Both move on. The match that could have worked never happens.</li>
+    </ul>
+    <div class="quote">Aisha actually built a SQL customer segmentation dashboard. She just never had a way to prove it credibly — and no system was designed to surface that proof to an employer.</div>
+  </div>
+</section>
+
+<!-- SLIDE 3 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">03 · What The ATS Is Missing</div>
+    <h1>It can't check if the résumé is true — and can't explain the score.</h1>
+    <div class="pipeline">
+      <span class="step">Résumé (claims)</span><span class="arr">→</span>
+      <span class="step">Keyword filter</span><span class="arr">→</span>
+      <span class="step">Ranking &amp; score</span><span class="arr">→</span>
+      <span class="step">Recruiter decision</span>
+    </div>
+    <div class="gapwrap">
+      <div class="gapbox">
+        <div class="gh"><span>Gap 1 — Input</span><span class="tag">● Never verified</span></div>
+        <ul>
+          <li>Is any of this true?</li>
+          <li>Where's the proof?</li>
+          <li>A polished, inflated résumé scores <em>higher</em> than an honest one.</li>
+        </ul>
+        <div class="verdict">[ NEVER VERIFIED ]</div>
+      </div>
+      <div class="gapbox">
+        <div class="gh"><span>Gap 2 — Output</span><span class="tag">● Black box</span></div>
+        <ul>
+          <li>Why this score?</li>
+          <li>Which evidence moved it?</li>
+          <li>Can the candidate appeal? No reasoning, no recourse — where bias hides.</li>
+        </ul>
+        <div class="verdict">[ BLACK BOX ]</div>
+      </div>
+    </div>
+    <div class="quote">Unverified going in, unexplained coming out. SignalPath closes both: proof on the input, an auditable score on the output.</div>
+  </div>
+</section>
+
+<!-- SLIDE 4 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">04 · SignalPath Fills The Empty Box</div>
+    <h1>Same two boxes — <span class="hl">now filled</span>.</h1>
+    <div class="gapwrap">
+      <div class="gapbox fixed">
+        <div class="gh"><span>Gap 1 · Input</span><span class="tag">✓ Addressed</span></div>
+        <ul>
+          <li>AI extracts, never invents</li>
+          <li>Candidate reviews &amp; accepts</li>
+          <li>Labelled: backed / self-claimed</li>
+        </ul>
+        <div class="verdict">[ VERIFIED PROOF ]</div>
+        <div class="sub">Living Portfolio</div>
+      </div>
+      <div class="gapbox fixed">
+        <div class="gh"><span>Gap 2 · Output</span><span class="tag">✓ Addressed</span></div>
+        <ul>
+          <li>Deterministic — same in, same out</li>
+          <li>Every point → a proof row</li>
+          <li>Candidate can see &amp; appeal</li>
+        </ul>
+        <div class="verdict">[ AUDITABLE SCORE ]</div>
+        <div class="sub">Evidence matrix + AI memo</div>
+      </div>
+    </div>
+    <div class="quote">AI shouldn't predict your future. It should organize your evidence.<small>Proof over prediction · Auditable over opaque · Candidate-owned</small></div>
+  </div>
+</section>
+
+<!-- SLIDE 5 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">05 · The Solution</div>
+    <h1>One graph, built once — <span class="hl">read three ways</span>.</h1>
+    <div class="arch">
+      <div class="node"><div class="nl">Input</div>Artifacts: PDF · repo · cert → AI extract + review</div>
+      <div class="down">↓</div>
+      <div class="graphnode"><div class="nl">The Evidence Graph</div>provenance-labelled · candidate-owned<div class="sub">the single source of truth</div></div>
+      <div class="down">↓</div>
+      <div class="three">
+        <div class="node"><div class="nl">Candidate</div>Living CV · gap checklist</div>
+        <div class="node"><div class="nl">Employer</div>Score · matrix · memo · re-engage</div>
+        <div class="node"><div class="nl">University</div>Cohort gaps · no individual data</div>
+      </div>
+    </div>
+    <div class="quote">Same evidence, three views — they can never disagree. No second copy to drift.</div>
+  </div>
+</section>
+
+<!-- SLIDE 6 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">06 · See It Working</div>
+    <h1>Not a mockup. <span class="hl">The real product.</span></h1>
+    <div class="demo-box">
+      <div class="play">▶</div>
+      <strong style="color:#fff">Live walkthrough — 90 sec</strong>
+      <div class="lk">talentbank-signalpath.vercel.app/marketplace</div>
+    </div>
+    <table>
+      <tr><th>Requirement</th><th>Evidence</th><th>Type</th><th>Score</th></tr>
+      <tr><td>SQL</td><td>Segmentation dashboard</td><td><span class="pill c">backed</span></td><td><span class="stat-num">4/5</span></td></tr>
+      <tr><td>Dashboarding</td><td>Power BI case study</td><td><span class="pill c">backed</span></td><td><span class="stat-num">4/5</span></td></tr>
+      <tr><td>Stakeholder comms</td><td>Presentation claim</td><td><span class="pill">self</span></td><td>2/5</td></tr>
+      <tr><td>Experimentation</td><td>None found</td><td><span class="pill">missing</span></td><td>0/5</td></tr>
+    </table>
+    <p class="note">Every row inspectable → "View proof". Memo built from visible rows only — no hidden factors.</p>
+  </div>
+</section>
+
+<!-- SLIDE 7 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">07 · Key Features</div>
+    <h1>Six modules, <span class="hl">one graph</span>.</h1>
+    <div class="feat">
+      <div class="f"><div class="fi">📄</div><h3>Living Portfolio</h3><p>A CV that updates from proof, not memory.</p><span class="pill c">Candidate</span></div>
+      <div class="f"><div class="fi">⚖️</div><h3>Evidence Matching</h3><p>Deterministic score, every point a proof row.</p><span class="pill">Employer</span></div>
+      <div class="f"><div class="fi">💬</div><h3>AI Match Memo</h3><p>Explains from visible rows — no hidden factors.</p><span class="pill">Employer</span></div>
+      <div class="f"><div class="fi">🎯</div><h3>Candidate Agency</h3><p>"One artifact away" — a checklist they own.</p><span class="pill c">Candidate</span></div>
+      <div class="f"><div class="fi">🔄</div><h3>Re-Engagement</h3><p>Improve evidence → resurface automatically.</p><span class="pill">Employer</span></div>
+      <div class="f"><div class="fi">🎓</div><h3>Adaptive Readiness</h3><p>Cohort gaps, aggregate only — no individual data.</p><span class="pill">University</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 8 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">08 · AI Craft</div>
+    <h1>AI does the hard parts. <span class="hl">Humans stay in control.</span></h1>
+    <div class="grid g2">
+      <div class="card">
+        <div class="clabel">✓ The AI does</div>
+        <ul class="clean" style="margin:.3rem 0">
+          <li>Extract claims from artifacts</li>
+          <li>Map to skill taxonomy</li>
+          <li>Draft CV bullets</li>
+          <li>Explain the memo</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:var(--gold);background:var(--gold-wash)">
+        <div class="clabel">✕ The AI never</div>
+        <ul class="clean" style="margin:.3rem 0">
+          <li>Generates the score</li>
+          <li>Invents claims</li>
+          <li>Hides uncertainty</li>
+          <li>Uses protected attributes</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pipeline" style="font-size:.78rem">
+      <span class="step">Semantic retrieval <em style="color:var(--muted)">[pgvector-ready · mock in POC]</em></span><span class="arr">→</span>
+      <span class="step">Deterministic scoring <em style="color:var(--good)">[live]</em></span><span class="arr">→</span>
+      <span class="step">AI memo from score rows <em style="color:var(--good)">[live]</em></span>
+    </div>
+    <p class="note">Unknown skill phrases → <span style="font-family:var(--mono)">suggested_skill_names</span> for human review. Never affects the score.</p>
+  </div>
+</section>
+
+<!-- SLIDE 9 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">09 · Why This Matters To TalentBank</div>
+    <h1>TalentBank's pipeline problem is an <span class="hl">evidence problem</span>.</h1>
+    <table>
+      <tr><th>Pain today</th><th>SignalPath answers</th></tr>
+      <tr><td>Unverifiable CVs</td><td><span class="pill c">Living Portfolio + provenance</span></td></tr>
+      <tr><td>Black-box rankings</td><td><span class="pill c">Deterministic score + matrix</span></td></tr>
+      <tr><td>Rejected = lost forever</td><td><span class="pill c">Re-engagement delta</span></td></tr>
+      <tr><td>No readiness view</td><td><span class="pill c">Adaptive Readiness</span></td></tr>
+    </table>
+    <div class="quote">Not a replacement — the evidence layer underneath the pipeline it already runs.</div>
+  </div>
+</section>
+
+<!-- SLIDE 10 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">10 · Where We Stand vs The Market</div>
+    <h1>Every tool solves <span class="hl">half</span>. None can reach our corner.</h1>
+    <div class="quad">
+      <span class="axis-y">Auditable ↔ Black box</span>
+      <span class="axis-x">Unverified claims ←→ Verified capability</span>
+      <div class="cell"><div class="who">Jobscan · Teal</div><div class="why">Résumé optimizers — transparent, but verify nothing</div></div>
+      <div class="cell win"><div class="who"><span class="star">★ SignalPath</span></div><div class="why">Candidate-owned proof, every score row inspectable</div></div>
+      <div class="cell"><div class="who">Legacy ATS · LinkedIn</div><div class="why">Keyword match, hidden ranking — broken on both axes</div></div>
+      <div class="cell"><div class="who">HireVue · Eightfold</div><div class="why">Real skill signal, but black-box score · scraped data · 2026 consent lawsuit</div></div>
+    </div>
+    <p style="margin-top:2.4rem;text-align:center"><strong>Verified + auditable + candidate-owned</strong> — the one corner no incumbent can pivot into without rebuilding their core.</p>
+  </div>
+</section>
+
+<!-- SLIDE 11 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">11 · The Impact In Malaysia</div>
+    <h1>Not jobless — <span class="hl">mismatched</span>.</h1>
+    <div class="funnel">
+      <div class="fbar"><div class="bar" style="width:100%">5.98M graduates (2024)</div></div>
+      <div class="fbar"><div class="bar" style="width:55%">1.60M underemployed — 32.2%</div><span class="cap">working below their qualifications</span></div>
+      <div class="fbar"><div class="bar lite" style="width:40%">66% of under-24 grads</div><span class="cap">two in three fresh grads mis-matched, not jobless</span></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v">3.2<span class="u">%</span></div><div class="l">Can't find a job</div></div>
+      <div class="stat"><div class="v">32.2<span class="u">%</span></div><div class="l">In the wrong one</div></div>
+      <div class="stat"><div class="v">16<span class="u">K</span></div><div class="l">Reach at just 1% capture</div></div>
+    </div>
+    <div class="quote">3.2% can't find a job. 32.2% are in the wrong one. We're built for the second number.<small>Source: DOSM Graduates Statistics 2024</small></div>
+  </div>
+</section>
+
+<!-- SLIDE 12 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">12 · The Ecosystem We're Building</div>
+    <h1>Today is <span class="hl">the foundation</span>.</h1>
+    <div class="layer now"><div class="ll">Now · the clickable POC</div><p>Portfolio · Matching · Re-Engagement · Readiness</p></div>
+    <div class="layconnect">↓</div>
+    <div class="layer next"><div class="ll">Next 12 months · depth</div><p>Fair-pay · retention signals · onboarding predictor · HRIS sync · curriculum feedback · internship market · learning wallet</p></div>
+    <div class="layconnect">↓</div>
+    <div class="layer trust"><div class="ll">Trust Layer · cryptographic — the moat</div><p>Verifiable credentials · blind matching · PDPA consent</p></div>
+  </div>
+</section>
+
+<!-- SLIDE 13 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">13 · Why It Compounds</div>
+    <h1>Not a feature. <span class="hl">The first turn of a loop.</span></h1>
+    <div class="loops">
+      <div class="loop">
+        <div class="lt">Outer loop · the ecosystem flywheel</div>
+        <div class="ring">
+          <div class="r ra">Candidate builds evidence</div><div>↓</div>
+          <div class="r">Employer hires &amp; re-engages</div><div>↓</div>
+          <div class="r">University closes curriculum gap</div><div>↓</div>
+          <div class="r">Better-prepared next cohort</div>
+          <div class="back">↻ back to stronger candidates</div>
+        </div>
+      </div>
+      <div class="loop">
+        <div class="lt">Inner loop · the employer never leaves</div>
+        <div class="ring">
+          <div class="r ra">Employer hires</div><div>↓</div>
+          <div class="r">Company goals / strategy shift</div><div>↓</div>
+          <div class="r">Matching + re-engagement re-run</div><div>↓</div>
+          <div class="r">Candidates resurface (new fit)</div>
+          <div class="back">↻ back to next hire</div>
+        </div>
+      </div>
+    </div>
+    <div class="quote">Every turn makes the evidence graph richer — and harder to leave. TalentBank sits at the centre.</div>
+  </div>
+</section>
+
+<!-- SLIDE 14 -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">14 · Closing</div>
+    <h1>Career OS shouldn't be a black box. <span class="hl">SignalPath makes it trustworthy.</span></h1>
+    <div class="grid g2">
+      <div class="card">
+        <div class="clabel">What we built (working POC)</div>
+        <ul class="clean" style="margin:.3rem 0">
+          <li>Clickable three-sided app: candidate · employer · university</li>
+          <li>Deterministic, auditable match scoring</li>
+          <li>AI extraction with a hard no-invent guardrail</li>
+          <li>Re-engagement engine + university readiness dashboard</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="clabel">Honest about the POC</div>
+        <ul class="clean" style="margin:.3rem 0">
+          <li>Provenance-backed, not legally verified</li>
+          <li>Auth, pgvector, HRIS sync designed-for, not yet wired</li>
+          <li>Everything in the demo loop is real</li>
+        </ul>
+      </div>
+    </div>
+    <div class="demo-box" style="padding:1.6rem">
+      <div class="lk" style="font-size:1rem">talentbank-signalpath.vercel.app/marketplace</div>
+      <p style="margin-top:.4rem;font-size:.82rem">Demo control: /demo-control → launch any scene</p>
+    </div>
+    <div class="quote">The evidence layer is built. The loop works. Let's put it to use.</div>
+  </div>
+</section>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="Previous">←</button>
+  <span class="count" id="count">01 / 14</span>
+  <button id="next" aria-label="Next">→</button>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  const total=slides.length;
+  const count=document.getElementById('count');
+  const pageno=document.getElementById('pageno');
+  const progress=document.getElementById('progress');
+  const pad=n=>String(n+1).padStart(2,'0');
+  function show(n){
+    i=Math.max(0,Math.min(total-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    const label=pad(i)+' / '+total;
+    count.textContent=label;pageno.textContent=label;
+    progress.style.width=((i+1)/total*100)+'%';
+    slides[i].scrollTop=0;
+  }
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')show(i+1);
+    if(e.key==='ArrowLeft'||e.key==='PageUp')show(i-1);
+    if(e.key==='Home')show(0);
+    if(e.key==='End')show(total-1);
+  });
+  // touch swipe
+  let x0=null;
+  document.addEventListener('touchstart',e=>x0=e.touches[0].clientX);
+  document.addEventListener('touchend',e=>{
+    if(x0===null)return;
+    const dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>50)show(i+(dx<0?1:-1));
+    x0=null;
+  });
+  show(0);
+</script>
+</body>
+</html>
