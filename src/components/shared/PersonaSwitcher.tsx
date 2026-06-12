@@ -77,8 +77,8 @@ export function PersonaSwitcher() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-all duration-200",
-          "hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
+          "flex h-10 items-center gap-2 rounded-full border px-2.5 transition-all duration-200",
+          "hover:bg-slate-50 active:scale-[0.98] dark:hover:bg-slate-900",
           "bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm",
           ROLE_BORDER[persona.role]
         )}
@@ -88,17 +88,17 @@ export function PersonaSwitcher() {
           role={persona.role}
           size="sm"
         />
-        <div className="flex flex-col items-start">
-          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <div className="hidden min-w-0 flex-col items-start xl:flex">
+          <span className="max-w-[96px] truncate whitespace-nowrap text-sm font-semibold leading-4 text-gray-900 dark:text-gray-100">
             {persona.name}
           </span>
-          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <span className="max-w-[96px] truncate text-[9px] font-bold uppercase leading-3 tracking-wider text-gray-500 dark:text-gray-400">
             {persona.role.replace("_", " ")}
           </span>
         </div>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-gray-400 transition-transform duration-200",
+            "h-3.5 w-3.5 text-gray-400 transition-transform duration-200",
             isOpen && "rotate-180"
           )}
         />

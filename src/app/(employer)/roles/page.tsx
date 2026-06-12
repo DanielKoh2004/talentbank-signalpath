@@ -258,6 +258,7 @@ export default function RolesPage() {
             variant="default"
             className="gap-1.5"
             onClick={() => setCreateOpen(true)}
+            data-help-id="employer-create-role"
           >
             <Plus className="h-3.5 w-3.5" />
             Create Role
@@ -265,6 +266,7 @@ export default function RolesPage() {
         </div>
       </div>
 
+      <div data-help-id="employer-roles-search">
       <SearchBand
         title="Manage role briefs"
         description="Search roles by title, location, work mode, or taxonomy skill before reviewing candidates."
@@ -286,6 +288,7 @@ export default function RolesPage() {
           </FilterPill>
         ))}
       </SearchBand>
+      </div>
 
       <NextStepPanel
         steps={[
@@ -451,6 +454,21 @@ function CreateRoleDialog({
       return;
     }
 
+    if (!location.trim()) {
+      setFormError("Location is required.");
+      return;
+    }
+
+    if (!workMode.trim()) {
+      setFormError("Work mode is required.");
+      return;
+    }
+
+    if (!description.trim()) {
+      setFormError("Role description is required.");
+      return;
+    }
+
     if (requirements.length === 0) {
       setFormError("Add at least one taxonomy skill requirement.");
       return;
@@ -513,6 +531,7 @@ function CreateRoleDialog({
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 Role Title
+                <span className="text-red-500"> *</span>
               </label>
               <Input
                 value={title}
@@ -524,6 +543,7 @@ function CreateRoleDialog({
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 Location
+                <span className="text-red-500"> *</span>
               </label>
               <Input
                 value={location}
@@ -535,6 +555,7 @@ function CreateRoleDialog({
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 Work Mode
+                <span className="text-red-500"> *</span>
               </label>
               <Select value={workMode} onValueChange={(value) => value && setWorkMode(value)}>
                 <SelectTrigger className="w-full">
@@ -577,6 +598,7 @@ function CreateRoleDialog({
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 Description
+                <span className="text-red-500"> *</span>
               </label>
               <Textarea
                 value={description}
@@ -591,6 +613,7 @@ function CreateRoleDialog({
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
                 Requirements
+                <span className="text-red-500"> *</span>
               </h3>
               <p className="mt-1 text-xs text-gray-500">
                 Add canonical skills from the shared taxonomy.

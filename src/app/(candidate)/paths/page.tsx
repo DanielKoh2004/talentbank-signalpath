@@ -34,7 +34,9 @@ export default function PathsPage() {
   const { persona } = usePersona();
   const router = useRouter();
   const candidateId =
-    persona.role === "candidate" ? getCandidateProfileId(persona.id) : null;
+    persona.role === "candidate"
+      ? getCandidateProfileId(persona.id, persona.candidateProfileId)
+      : null;
 
   const [data, setData] = useState<PathsData | null>(null);
   const [loading, setLoading] = useState(false);

@@ -16,6 +16,9 @@ import {
   EyeOff,
   Users,
   CheckCircle2,
+  AlertTriangle,
+  Send,
+  Upload,
 } from "lucide-react";
 
 // =============================================================================
@@ -33,6 +36,7 @@ interface OpportunityCardData {
   salaryMax: number | null;
   salaryCurrency: string;
   salarySource: string | null;
+  employerName?: string;
   description: string | null;
   requirements: Array<{
     skillId: string;
@@ -44,15 +48,27 @@ interface OpportunityCardData {
   readinessPercent?: number;
   gapCount?: number;
   candidateStatus?: string;
+  thresholdPercent?: number;
+  pointsToThreshold?: number;
+  topGapSkill?: {
+    skillId: string;
+    skillName: string;
+    status: string;
+    evidenceStrength: number;
+    minimumRequired: number;
+  } | null;
 }
 
 interface OpportunityCardProps {
   role: OpportunityCardData;
   variant: "candidate" | "employer";
   onInterest?: (roleId: string) => void;
+  onApply?: (roleId: string) => void;
+  onUploadProof?: (roleId: string, skillId: string) => void;
   onHide?: (roleId: string) => void;
   onView?: (roleId: string) => void;
   interestLoading?: boolean;
+  applyLoading?: boolean;
   className?: string;
 }
 
@@ -66,9 +82,12 @@ export function OpportunityCard({
   role,
   variant,
   onInterest,
+  onApply,
+  onUploadProof,
   onHide,
   onView,
   interestLoading,
+  applyLoading,
   className,
 }: OpportunityCardProps) {
   const requiredCount = role.requirements.filter(
@@ -76,6 +95,13 @@ export function OpportunityCard({
   ).length;
 
   const isInterested = role.candidateStatus === "interested";
+  const isApplied = role.candidateStatus === "applied";
+  const thresholdPercent = role.thresholdPercent ?? 75;
+  const isBelowThreshold =
+    variant === "candidate" &&
+    role.readinessPercent !== undefined &&
+    role.readinessPercent < thresholdPercent &&
+    !!role.topGapSkill;
 
   const readinessColor =
     (role.readinessPercent ?? 0) >= 70
@@ -114,6 +140,12 @@ export function OpportunityCard({
                 <Badge className="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
                   <Heart className="h-2.5 w-2.5 mr-0.5 fill-current" />
                   Interested
+                </Badge>
+              )}
+              {isApplied && (
+                <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                  <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+                  Applied
                 </Badge>
               )}
             </div>
@@ -177,6 +209,27 @@ export function OpportunityCard({
           />
         )}
 
+        {isBelowThreshold && role.topGapSkill && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+              <div>
+                <p className="font-bold">
+                  You are {Math.max(1, role.pointsToThreshold ?? 1)} point
+                  {(role.pointsToThreshold ?? 1) === 1 ? "" : "s"} away from the{" "}
+                  {role.employerName ?? "employer"} shortlist.
+                </p>
+                <p className="mt-1 leading-5">
+                  {role.employerName ?? "This employer"} requires{" "}
+                  <span className="font-bold">{role.topGapSkill.skillName}</span>.
+                  Upload proof for this skill to cross the {thresholdPercent}%
+                  threshold and notify HR.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Skills preview */}
         <div className="flex flex-wrap gap-1">
           {role.requirements.slice(0, 3).map((req) => (
@@ -211,7 +264,43 @@ export function OpportunityCard({
         <div className="flex items-center justify-between pt-1">
           {variant === "candidate" && (
             <div className="flex items-center gap-2">
-              {!isInterested ? (
+              {isApplied ? (
+                <DisabledTooltipButton
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs gap-1 text-emerald-600"
+                  disabledReason="Your application has already been sent."
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                  Application Sent
+                </DisabledTooltipButton>
+              ) : isBelowThreshold && role.topGapSkill ? (
+                <Button
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUploadProof?.(role.id, role.topGapSkill!.skillId);
+                  }}
+                >
+                  <Upload className="h-3 w-3" />
+                  Upload Evidence
+                </Button>
+              ) : role.readinessPercent !== undefined &&
+                role.readinessPercent >= thresholdPercent ? (
+                <Button
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  disabled={applyLoading}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onApply?.(role.id);
+                  }}
+                >
+                  <Send className="h-3 w-3" />
+                  Apply Now
+                </Button>
+              ) : !isInterested ? (
                 interestLoading ? (
                   <DisabledTooltipButton
                     size="sm"

@@ -15,6 +15,7 @@ export interface Persona {
   role: UserRole;
   avatarInitials: string;
   description: string;
+  candidateProfileId?: string;
 }
 
 // --- Provenance ---

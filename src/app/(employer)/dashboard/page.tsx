@@ -71,6 +71,14 @@ export default function DashboardPage() {
     (sum: number, r: RoleData) => sum + (r.matchCount ?? 0),
     0
   );
+  const totalApplications = roles.reduce(
+    (sum: number, r: RoleData) => sum + (r.applicationCount ?? 0),
+    0
+  );
+  const pendingReview = roles.reduce(
+    (sum: number, r: RoleData) => sum + (r.pendingReviewCount ?? 0),
+    0
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,7 +94,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           label="Active Roles"
           value={roles.length.toString()}
@@ -94,10 +102,16 @@ export default function DashboardPage() {
           color="indigo"
         />
         <StatCard
-          label="Candidate Interests"
+          label="Candidate Signals"
           value={totalInteractions.toString()}
           icon={Heart}
           color="rose"
+        />
+        <StatCard
+          label="Applications"
+          value={totalApplications.toString()}
+          icon={Users}
+          color="indigo"
         />
         <StatCard
           label="Match Scores"
@@ -107,7 +121,7 @@ export default function DashboardPage() {
         />
         <StatCard
           label="Pending Review"
-          value={totalInteractions.toString()}
+          value={pendingReview.toString()}
           icon={Eye}
           color="amber"
         />

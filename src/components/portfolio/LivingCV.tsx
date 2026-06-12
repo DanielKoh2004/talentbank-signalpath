@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { SkillBadge } from "@/components/shared/SkillBadge";
 import { ProvenanceBadge } from "@/components/shared/ProvenanceBadge";
@@ -14,6 +15,9 @@ import {
   GraduationCap,
   Shield,
   FileText,
+  Copy,
+  Download,
+  Printer,
 } from "lucide-react";
 import type { ProvenanceStatus } from "@/types";
 
@@ -143,6 +147,44 @@ export function LivingCV({
   const groupedClaims = groupClaimsByCategory(acceptedClaims, skillMap);
   const categoryOrder = Object.keys(groupedClaims).sort();
 
+  const cvPayload = {
+    candidateName,
+    candidateDescription,
+    skills: skillSummary,
+    claims: acceptedClaims.map((claim) => ({
+      claimText: claim.claimText,
+      skills: claim.normalizedSkillIds.map(
+        (skillId) => skillMap[skillId]?.name ?? skillId,
+      ),
+      proofSource: claim.artifact.title,
+      provenanceStatus: claim.provenanceStatus,
+      evidenceQualityScore: claim.evidenceQualityScore,
+    })),
+  };
+
+  function copyCv() {
+    const lines = [
+      candidateName,
+      candidateDescription ?? "",
+      "",
+      "Evidence-backed claims:",
+      ...acceptedClaims.map((claim) => `- ${claim.claimText} (${claim.artifact.title})`),
+    ].filter(Boolean);
+    navigator.clipboard?.writeText(lines.join("\n"));
+  }
+
+  function downloadJson() {
+    const blob = new Blob([JSON.stringify(cvPayload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${candidateName.toLowerCase().replace(/\s+/g, "-")}-living-cv.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (acceptedClaims.length === 0) {
     return (
       <EmptyState
@@ -172,6 +214,20 @@ export function LivingCV({
           <Badge className="bg-white/20 text-white border-white/20 hover:bg-white/30 text-xs">
             {skillSummary.length} skills evidenced
           </Badge>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" className="gap-1.5" onClick={copyCv}>
+            <Copy className="h-3.5 w-3.5" />
+            Copy CV
+          </Button>
+          <Button size="sm" variant="secondary" className="gap-1.5" onClick={downloadJson}>
+            <Download className="h-3.5 w-3.5" />
+            Download JSON
+          </Button>
+          <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => window.print()}>
+            <Printer className="h-3.5 w-3.5" />
+            Printable CV
+          </Button>
         </div>
       </div>
 

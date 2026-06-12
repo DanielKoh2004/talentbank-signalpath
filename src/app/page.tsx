@@ -107,6 +107,12 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link
+              href="/register"
+              className={cn(buttonVariants({ variant: "outline" }), "hidden sm:inline-flex")}
+            >
+              Register
+            </Link>
+            <Link
               href="/portfolio"
               className={cn(buttonVariants(), "bg-[#ec006d] hover:bg-[#d10062]")}
             >
@@ -149,6 +155,15 @@ export default function HomePage() {
               >
                 Try Candidate Demo
                 <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+              <Link
+                href="/register"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "border-white bg-transparent font-black text-white hover:bg-white hover:text-[#071f5c]"
+                )}
+              >
+                Create Profile
               </Link>
               <Link
                 href="/dashboard"

@@ -60,6 +60,24 @@ async function provideArtifactContent(input: { artifactId: string; extractedText
   return res.json();
 }
 
+async function uploadResume(input: {
+  candidateId: string;
+  resumeText?: string;
+  file?: File | null;
+}) {
+  const formData = new FormData();
+  formData.set("candidateId", input.candidateId);
+  if (input.resumeText) formData.set("resumeText", input.resumeText);
+  if (input.file) formData.set("file", input.file);
+
+  const res = await fetch("/api/resume", {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error("Failed to upload resume");
+  return res.json();
+}
+
 export function useArtifacts(candidateId: string | null) {
   const queryClient = useQueryClient();
 
@@ -83,6 +101,13 @@ export function useArtifacts(candidateId: string | null) {
     },
   });
 
+  const resumeMutation = useMutation({
+    mutationFn: uploadResume,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["artifacts", candidateId] });
+    },
+  });
+
   return {
     artifacts: query.data ?? [],
     isLoading: query.isLoading,
@@ -90,6 +115,9 @@ export function useArtifacts(candidateId: string | null) {
     upload: uploadMutation.mutate,
     isUploading: uploadMutation.isPending,
     lastUpload: uploadMutation.data ?? null,
+    uploadResume: resumeMutation.mutate,
+    isUploadingResume: resumeMutation.isPending,
+    lastResumeUpload: resumeMutation.data ?? null,
     provideContent: provideContentMutation.mutate,
     isProviding: provideContentMutation.isPending,
     lastProvide: provideContentMutation.data ?? null,

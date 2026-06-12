@@ -338,6 +338,34 @@ function buildPathCard(
   };
 }
 
+function requiredCoverageSummary(coverage: RoleCoverageResult) {
+  const requiredRows = coverage.requirementCoverage.filter(
+    (row) => row.importance === "required",
+  );
+  const metRequired = requiredRows.filter((row) => row.status === "met").length;
+  const partialRequired = requiredRows.filter(
+    (row) => row.status === "partial",
+  ).length;
+  const totalRequired = requiredRows.length;
+
+  return { metRequired, partialRequired, totalRequired };
+}
+
+function nearbyReason(coverage: RoleCoverageResult) {
+  const { metRequired, partialRequired, totalRequired } =
+    requiredCoverageSummary(coverage);
+  const partialText =
+    partialRequired > 0
+      ? `, with partial evidence for ${partialRequired} more`
+      : "";
+  const scoreContext =
+    coverage.readinessPercent < 100
+      ? " Readiness is weighted by evidence strength and nice-to-have coverage, not skill presence alone."
+      : "";
+
+  return `You fully meet ${metRequired} of ${totalRequired} required skills${partialText}.${scoreContext}`;
+}
+
 // ── Synthetic path generation ───────────────────────────────────────────────
 
 /**
@@ -410,7 +438,7 @@ export async function generatePaths(
   const rawClaims = await prisma.evidenceClaim.findMany({
     where: {
       candidateId,
-      candidateStatus: "accepted",
+      candidateStatus: { in: ["accepted", "edited"] },
     },
   });
 
@@ -507,7 +535,7 @@ export async function generatePaths(
         brief,
         claims,
         skillMap,
-        `You cover ${brief.coverage.metCount} of ${brief.coverage.totalRequired} required skills. Your evidence strongly supports this role.`,
+        nearbyReason(brief.coverage),
       );
       paths.push(card);
       usedBriefIds.add(brief.id);

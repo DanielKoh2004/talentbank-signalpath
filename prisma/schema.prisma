@@ -36,6 +36,7 @@ model CandidateProfile {
   salaryExpectationMin Int?
   salaryExpectationMax Int?
   visibilityStatus     String  @default("private")
+  resumeDraftJson      String?
 
   user User @relation(fields: [userId], references: [id])
 
@@ -228,6 +229,9 @@ model OpportunityInteraction {
   employerStatus     String   @default("not_reviewed") // not_reviewed | shortlisted | contacted | rejected
   lastReadinessScore Float?
   lastGapCount       Int?
+  applicationNote    String?
+  applicationAnswers String?
+  appliedAt          DateTime?
   updatedAt          DateTime @updatedAt
 
   roleBrief RoleBrief        @relation(fields: [roleBriefId], references: [id])

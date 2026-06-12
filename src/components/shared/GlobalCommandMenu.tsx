@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BarChart3,
@@ -79,17 +79,26 @@ export function GlobalCommandMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  const openCommandMenu = useCallback(() => {
+    setOpen(true);
+  }, []);
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setOpen((current) => !current);
+        event.stopPropagation();
+        setOpen(true);
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+    document.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("signalpath:open-command", openCommandMenu);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("signalpath:open-command", openCommandMenu);
+    };
+  }, [openCommandMenu]);
 
   function navigate(href: string) {
     setOpen(false);
@@ -100,12 +109,21 @@ export function GlobalCommandMenu() {
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      title="TalentVault Command Menu"
+      title="SignalPath Command Menu"
       description="Jump to a workflow or demo surface."
       className="max-w-xl"
+      showCloseButton
     >
+      <div className="border-b border-border px-4 py-3">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-pink-600">
+          Command Menu
+        </p>
+        <h2 className="mt-1 text-lg font-black text-slate-950 dark:text-white">
+          Jump to a SignalPath workflow
+        </h2>
+      </div>
       <Command>
-        <CommandInput placeholder="Search TalentVault..." />
+        <CommandInput autoFocus placeholder="Search SignalPath..." />
         <CommandList>
           <CommandEmpty>No matching workflow found.</CommandEmpty>
           <CommandGroup heading="Navigation">

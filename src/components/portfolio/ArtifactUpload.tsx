@@ -82,21 +82,26 @@ interface ArtifactUploadProps {
     extractedText?: string;
     demoManifestId?: string;
   }) => void;
+  onResumeUpload?: (data: { resumeText?: string; file?: File | null }) => void;
   isUploading: boolean;
   className?: string;
 }
 
 export function ArtifactUpload({
   onUpload,
+  onResumeUpload,
   isUploading,
   className,
 }: ArtifactUploadProps) {
-  const [mode, setMode] = useState<"demo" | "custom">("demo");
+  const [mode, setMode] = useState<"demo" | "resume" | "custom">("demo");
   const [title, setTitle] = useState("");
   const [type, setType] = useState("project");
   const [sourceUrl, setSourceUrl] = useState("");
   const [pastedText, setPastedText] = useState("");
+  const [resumeText, setResumeText] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [statusIndex, setStatusIndex] = useState(0);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isUploading) {
@@ -120,8 +125,12 @@ export function ArtifactUpload({
   }
 
   function handleCustomUpload() {
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setFormError("Enter an artifact title before uploading.");
+      return;
+    }
     setStatusIndex(0);
+    setFormError(null);
     onUpload({
       title: title.trim(),
       type,
@@ -131,6 +140,22 @@ export function ArtifactUpload({
     setTitle("");
     setSourceUrl("");
     setPastedText("");
+  }
+
+  function handleResumeUpload() {
+    if (!onResumeUpload) return;
+    if (!resumeText.trim() && !resumeFile) {
+      setFormError("Upload a PDF or paste resume text first.");
+      return;
+    }
+    setStatusIndex(0);
+    setFormError(null);
+    onResumeUpload({
+      resumeText: resumeText.trim() || undefined,
+      file: resumeFile,
+    });
+    setResumeText("");
+    setResumeFile(null);
   }
 
   if (isUploading) {
@@ -202,12 +227,15 @@ export function ArtifactUpload({
   }
 
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card className={cn("overflow-hidden", className)} data-help-id="portfolio-upload-proof">
       <CardContent className="p-0">
         {/* Tab switcher */}
         <div className="flex border-b border-gray-200 dark:border-gray-700">
           <button
-            onClick={() => setMode("demo")}
+            onClick={() => {
+              setMode("demo");
+              setFormError(null);
+            }}
             className={cn(
               "flex-1 px-4 py-3 text-sm font-medium transition-colors",
               mode === "demo"
@@ -219,7 +247,25 @@ export function ArtifactUpload({
             Demo Artifacts
           </button>
           <button
-            onClick={() => setMode("custom")}
+            onClick={() => {
+              setMode("resume");
+              setFormError(null);
+            }}
+            className={cn(
+              "flex-1 px-4 py-3 text-sm font-medium transition-colors",
+              mode === "resume"
+                ? "bg-indigo-50 text-indigo-700 border-b-2 border-indigo-500 dark:bg-indigo-900/20 dark:text-indigo-400"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 dark:hover:text-gray-300"
+            )}
+          >
+            <FileText className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+            Resume
+          </button>
+          <button
+            onClick={() => {
+              setMode("custom");
+              setFormError(null);
+            }}
             className={cn(
               "flex-1 px-4 py-3 text-sm font-medium transition-colors",
               mode === "custom"
@@ -268,12 +314,78 @@ export function ArtifactUpload({
           </div>
         )}
 
+        {/* Resume upload */}
+        {mode === "resume" && (
+          <div className="space-y-4 p-4">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+              Resume extraction finds skills to prove. It does not make claims
+              verified until you upload project, certificate, or repository proof.
+            </div>
+
+            {formError && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 dark:bg-red-950/30 dark:text-red-300">
+                {formError}
+              </p>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                Upload PDF resume or paste text <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setResumeFile(e.target.files?.[0] ?? null)}
+              />
+              {resumeFile && (
+                <p className="text-xs text-gray-500">
+                  Selected: {resumeFile.name}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                Or paste resume text
+              </label>
+              <Textarea
+                placeholder="Paste your resume content here if PDF parsing fails or you want the safest demo path..."
+                value={resumeText}
+                onChange={(e) => setResumeText(e.target.value)}
+                rows={6}
+              />
+            </div>
+
+            {!resumeText.trim() && !resumeFile ? (
+              <DisabledTooltipButton
+                className="w-full gap-2"
+                disabledReason="Upload a PDF or paste resume text first."
+              >
+                <FileText className="h-4 w-4" />
+                Extract Resume Skills
+              </DisabledTooltipButton>
+            ) : (
+              <Button onClick={handleResumeUpload} className="w-full gap-2">
+                <FileText className="h-4 w-4" />
+                Extract Resume Skills
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Custom upload */}
         {mode === "custom" && (
           <div className="p-4 space-y-4">
+            {formError && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 dark:bg-red-950/30 dark:text-red-300">
+                {formError}
+              </p>
+            )}
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 Artifact Title
+                <span className="text-red-500"> *</span>
               </label>
               <Input
                 placeholder="e.g., Sales Dashboard Project"

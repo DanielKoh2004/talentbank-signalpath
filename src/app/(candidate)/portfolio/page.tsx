@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { usePersona } from "@/providers/PersonaProvider";
 import { useArtifacts } from "@/hooks/useArtifacts";
 import { useClaims } from "@/hooks/useClaims";
@@ -43,16 +44,32 @@ interface SkillInfo {
 
 export default function PortfolioPage() {
   const { persona } = usePersona();
+  const searchParams = useSearchParams();
   const candidateId =
-    persona.role === "candidate" ? getCandidateProfileId(persona.id) : null;
+    persona.role === "candidate"
+      ? getCandidateProfileId(persona.id, persona.candidateProfileId)
+      : null;
 
-  const { artifacts, upload, isUploading, lastUpload, provideContent, isProviding, lastProvide } = useArtifacts(candidateId);
+  const {
+    artifacts,
+    upload,
+    isUploading,
+    lastUpload,
+    uploadResume,
+    isUploadingResume,
+    lastResumeUpload,
+    provideContent,
+    isProviding,
+    lastProvide,
+  } = useArtifacts(candidateId);
   const { claims, accept, reject, edit, acceptAll, isUpdating } = useClaims(candidateId);
 
   // Track the latest extraction job for polling
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const { job, trigger, isTriggering } = useExtractionJob(activeJobId);
-  const [activeTab, setActiveTab] = useState("inbox");
+  const [activeTab, setActiveTab] = useState(
+    searchParams.get("intent") === "prove-skill" ? "artifacts" : "inbox"
+  );
 
   // Skill map for display (loaded from API)
   const [skillMap, setSkillMap] = useState<Record<string, SkillInfo>>({});
@@ -73,6 +90,13 @@ export default function PortfolioPage() {
       });
   }, []);
 
+  const proofIntentSkillId = searchParams.get("skillId");
+  const proofIntentRoleId = searchParams.get("roleId");
+  const proofIntentSkillName =
+    proofIntentSkillId && skillMap[proofIntentSkillId]
+      ? skillMap[proofIntentSkillId].name
+      : proofIntentSkillId;
+
   // When upload completes, trigger extraction
   const prevUploadRef = useRef<string | null>(null);
   useEffect(() => {
@@ -83,6 +107,18 @@ export default function PortfolioPage() {
       setTimeout(() => trigger(), 500);
     }
   }, [lastUpload, trigger]);
+
+  const prevResumeUploadRef = useRef<string | null>(null);
+  useEffect(() => {
+    const newJobId = lastResumeUpload?.extractionJob?.id;
+    if (newJobId && newJobId !== prevResumeUploadRef.current) {
+      prevResumeUploadRef.current = newJobId;
+      setActiveJobId(newJobId);
+      if (lastResumeUpload.extractionJob.status === "queued") {
+        setTimeout(() => trigger(), 500);
+      }
+    }
+  }, [lastResumeUpload, trigger]);
 
   // When provide-content completes, trigger extraction on the new job
   const prevProvideRef = useRef<string | null>(null);
@@ -116,8 +152,17 @@ export default function PortfolioPage() {
     [candidateId, upload]
   );
 
+  const handleResumeUpload = useCallback(
+    (data: { resumeText?: string; file?: File | null }) => {
+      if (!candidateId) return;
+      uploadResume({ candidateId, ...data });
+    },
+    [candidateId, uploadResume]
+  );
+
   const isExtractionActive =
     isUploading ||
+    isUploadingResume ||
     isTriggering ||
     job?.status === "queued" ||
     job?.status === "processing";
@@ -143,6 +188,32 @@ export default function PortfolioPage() {
       ? acceptedClaims.reduce((sum, c) => sum + c.evidenceQualityScore, 0) /
         acceptedClaims.length
       : 0;
+
+  const proofBackedSkillIds = new Set<string>();
+  const resumeSkillIds = new Set<string>();
+  for (const claim of claims) {
+    const isProofBacked =
+      claim.provenanceStatus === "artifact_backed" ||
+      claim.provenanceStatus === "repo_backed" ||
+      claim.provenanceStatus === "reviewer_confirmed";
+    const isResumeClaim = claim.artifact.type === "cv";
+    for (const skillId of claim.normalizedSkillIds) {
+      if (isProofBacked && claim.candidateStatus !== "rejected") {
+        proofBackedSkillIds.add(skillId);
+      }
+      if (isResumeClaim && claim.candidateStatus !== "rejected") {
+        resumeSkillIds.add(skillId);
+      }
+    }
+  }
+  const resumeSkillsNeedingProof = Array.from(resumeSkillIds)
+    .filter((skillId) => !proofBackedSkillIds.has(skillId))
+    .map((skillId) => ({
+      skillId,
+      name: skillMap[skillId]?.name ?? skillId,
+      category: skillMap[skillId]?.category ?? "Resume",
+    }))
+    .slice(0, 8);
 
   if (!candidateId) {
     return (
@@ -246,6 +317,58 @@ export default function PortfolioPage() {
         icon={Upload}
       />
 
+      {proofIntentSkillId && (
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30">
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-amber-950 dark:text-amber-100">
+                Upload proof for {proofIntentSkillName ?? "this skill"}
+              </p>
+              <p className="mt-1 text-sm text-amber-900 dark:text-amber-100/80">
+                This skill is blocking your shortlist threshold. Add a project,
+                certificate, case study, or repository proof and accept the
+                extracted claim.
+              </p>
+            </div>
+            {proofIntentRoleId && (
+              <Badge className="w-fit bg-amber-600 text-white hover:bg-amber-600">
+                Role gap selected
+              </Badge>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {resumeSkillsNeedingProof.length > 0 && (
+        <Card>
+          <CardContent className="space-y-4 p-5">
+            <div>
+              <h2 className="text-base font-black text-slate-950 dark:text-white">
+                Proof needed from your resume
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                These skills appeared in your resume, but still need stronger
+                artifact proof before employers should fully trust them.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {resumeSkillsNeedingProof.map((skill) => (
+                <Button
+                  key={skill.skillId}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setActiveTab("artifacts")}
+                >
+                  <FileUp className="h-3.5 w-3.5" />
+                  Upload proof for {skill.name}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats row */}
       <div className="grid grid-cols-4 gap-4">
         <StatCard
@@ -277,7 +400,7 @@ export default function PortfolioPage() {
       {/* Main content: two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left column: Evidence management */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4" data-help-id="portfolio-review-claims">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full">
               <TabsTrigger value="inbox" className="flex-1 gap-1.5">
@@ -328,6 +451,7 @@ export default function PortfolioPage() {
             <TabsContent value="artifacts" className="mt-4 space-y-4">
               <ArtifactUpload
                 onUpload={handleUpload}
+                onResumeUpload={handleResumeUpload}
                 isUploading={Boolean(isExtractionActive)}
               />
 
@@ -390,7 +514,7 @@ export default function PortfolioPage() {
         </div>
 
         {/* Right column: Living CV */}
-        <div className="lg:sticky lg:top-20 lg:self-start">
+        <div className="lg:sticky lg:top-20 lg:self-start" data-help-id="portfolio-living-cv">
           <LivingCV
             claims={claims}
             candidateName={persona.name}

@@ -56,6 +56,7 @@ export function ClaimCard({
   const [editedText, setEditedText] = useState(claim.claimText);
   const [isEdited, setIsEdited] = useState(false);
   const [showSource, setShowSource] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const isPending = claim.candidateStatus === "pending";
   const isAccepted = claim.candidateStatus === "accepted" || claim.candidateStatus === "edited";
@@ -63,6 +64,7 @@ export function ClaimCard({
 
   function handleTextChange(value: string) {
     setEditedText(value);
+    setEditError(null);
     setIsEdited(
       normalizeClaimText(value) !== normalizeClaimText(claim.claimText)
     );
@@ -71,10 +73,15 @@ export function ClaimCard({
   function startEditing() {
     setEditedText(claim.claimText);
     setIsEdited(false);
+    setEditError(null);
     setIsEditing(true);
   }
 
   function handleSaveEdit() {
+    if (!editedText.trim()) {
+      setEditError("Claim text is required.");
+      return;
+    }
     onEdit({ claimId: claim.id, editedText });
     setIsEditing(false);
     setIsEdited(false);
@@ -121,6 +128,11 @@ export function ClaimCard({
             <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-600 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
               ⚠️ Editing this text will downgrade its status to Self-Claimed and lower your Match Score.
             </div>
+          )}
+          {editError && (
+            <p className="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {editError}
+            </p>
           )}
           <div className="flex gap-2">
             {isUpdating ? (

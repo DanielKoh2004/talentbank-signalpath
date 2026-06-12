@@ -75,6 +75,17 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    if (
+      action === "edit" &&
+      typeof incomingClaimText === "string" &&
+      !incomingClaimText.trim()
+    ) {
+      return NextResponse.json(
+        { error: "Claim text is required", field: "claim_text" },
+        { status: 400 }
+      );
+    }
+
     const existing = await prisma.evidenceClaim.findUnique({
       where: { id: claimId },
     });

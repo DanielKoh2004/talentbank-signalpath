@@ -42,9 +42,28 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { candidateId, title, type, sourceUrl, extractedText, demoManifestId } = body;
 
-    if (!candidateId || !title || !type) {
+    const trimmedCandidateId =
+      typeof candidateId === "string" ? candidateId.trim() : "";
+    const trimmedTitle = typeof title === "string" ? title.trim() : "";
+    const trimmedType = typeof type === "string" ? type.trim() : "";
+
+    if (!trimmedCandidateId) {
       return NextResponse.json(
-        { error: "candidateId, title, and type are required" },
+        { error: "candidateId is required", field: "candidateId" },
+        { status: 400 }
+      );
+    }
+
+    if (!trimmedTitle) {
+      return NextResponse.json(
+        { error: "Artifact title is required", field: "title" },
+        { status: 400 }
+      );
+    }
+
+    if (!trimmedType) {
+      return NextResponse.json(
+        { error: "Artifact type is required", field: "type" },
         { status: 400 }
       );
     }
@@ -54,7 +73,7 @@ export async function POST(request: NextRequest) {
       "cv", "project", "certificate", "repo_link",
       "portfolio_link", "case_study", "screenshot", "other",
     ];
-    if (!validTypes.includes(type)) {
+    if (!validTypes.includes(trimmedType)) {
       return NextResponse.json(
         { error: `Invalid artifact type. Must be one of: ${validTypes.join(", ")}` },
         { status: 400 }
@@ -63,20 +82,23 @@ export async function POST(request: NextRequest) {
 
     // Determine extraction source
     let extractionSource = "manual_entry";
+    const trimmedExtractedText =
+      typeof extractedText === "string" ? extractedText.trim() : "";
+
     if (demoManifestId) {
       extractionSource = "manifest";
-    } else if (extractedText) {
+    } else if (trimmedExtractedText) {
       extractionSource = "native_text";
     }
 
     // Create artifact
     const artifact = await prisma.artifact.create({
       data: {
-        candidateId,
-        title,
-        type,
-        sourceUrl: sourceUrl ?? null,
-        extractedText: extractedText ?? null,
+        candidateId: trimmedCandidateId,
+        title: trimmedTitle,
+        type: trimmedType,
+        sourceUrl: typeof sourceUrl === "string" && sourceUrl.trim() ? sourceUrl.trim() : null,
+        extractedText: trimmedExtractedText || null,
         extractionSource,
         demoManifestId: demoManifestId ?? null,
       },
@@ -86,7 +108,7 @@ export async function POST(request: NextRequest) {
     const job = await prisma.extractionJob.create({
       data: {
         artifactId: artifact.id,
-        candidateId,
+        candidateId: trimmedCandidateId,
         status: "queued",
         extractionSource,
         progressLabel: "Preparing artifact",

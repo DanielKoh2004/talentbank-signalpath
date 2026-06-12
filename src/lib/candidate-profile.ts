@@ -5,6 +5,7 @@ export const CANDIDATE_PROFILE_BY_USER_ID: Record<string, string> = {
   user_arjun: "profile_arjun",
 };
 
-export function getCandidateProfileId(userId: string) {
+export function getCandidateProfileId(userId: string, candidateProfileId?: string) {
+  if (candidateProfileId) return candidateProfileId;
   return CANDIDATE_PROFILE_BY_USER_ID[userId] ?? "profile_aisha";
 }

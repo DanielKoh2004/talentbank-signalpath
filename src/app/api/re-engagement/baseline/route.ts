@@ -8,17 +8,24 @@ export async function POST(request: NextRequest) {
     const roleBriefId = body.roleBriefId as string | undefined;
     const rejectionReason = body.rejectionReason as string | undefined;
 
-    if (!candidateId || !roleBriefId) {
+    if (!candidateId?.trim() || !roleBriefId?.trim()) {
       return NextResponse.json(
-        { error: "candidateId and roleBriefId are required" },
+        { error: "candidateId and roleBriefId are required", field: "candidateId" },
+        { status: 400 },
+      );
+    }
+
+    if (!rejectionReason?.trim()) {
+      return NextResponse.json(
+        { error: "Rejection reason is required", field: "rejectionReason" },
         { status: 400 },
       );
     }
 
     const snapshot = await snapshotRejectedCandidate({
-      candidateId,
-      roleBriefId,
-      rejectionReason,
+      candidateId: candidateId.trim(),
+      roleBriefId: roleBriefId.trim(),
+      rejectionReason: rejectionReason.trim(),
     });
 
     return NextResponse.json({ snapshot });

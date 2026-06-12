@@ -2,14 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, FolderOpen, Map } from "lucide-react";
+import { Briefcase, ClipboardList, FolderOpen, LayoutDashboard, Map, UserRound } from "lucide-react";
 import { AppChrome, type AppNavItem } from "@/components/shared/AppChrome";
 import { usePersona } from "@/providers/PersonaProvider";
 
 const CANDIDATE_NAV: AppNavItem[] = [
+  { label: "Overview", href: "/overview", icon: LayoutDashboard },
+  { label: "Profile", href: "/profile", icon: UserRound },
   { label: "Living Portfolio", href: "/portfolio", icon: FolderOpen },
-  { label: "Career Paths", href: "/paths", icon: Map },
   { label: "Marketplace", href: "/marketplace", icon: Briefcase },
+  { label: "Applications", href: "/applications", icon: ClipboardList },
+  { label: "Career Paths", href: "/paths", icon: Map },
 ];
 
 export default function CandidateLayout({

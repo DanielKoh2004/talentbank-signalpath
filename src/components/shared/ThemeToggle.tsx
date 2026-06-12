@@ -40,7 +40,7 @@ export function ThemeToggle() {
         applyTheme(nextTheme);
         setTheme(nextTheme);
       }}
-      className="rounded-full"
+      className="h-9 w-9 rounded-full"
     >
       {theme === "dark" ? (
         <Sun className="h-4 w-4" />

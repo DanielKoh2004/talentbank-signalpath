@@ -243,13 +243,24 @@ async function createClaimsFromLocal(
 
   // Run local extraction
   const localClaims = extractClaimsLocally(extractedText, validSkillIds);
+  const normalizedClaims =
+    artifactType === "cv"
+      ? localClaims.map((claim) => ({
+          ...claim,
+          provenanceStatus:
+            claim.provenanceStatus === "artifact_backed"
+              ? "document_backed"
+              : claim.provenanceStatus,
+          evidenceQualityScore: Math.min(claim.evidenceQualityScore, 2),
+        }))
+      : localClaims;
 
-  if (localClaims.length === 0) {
+  if (normalizedClaims.length === 0) {
     return 0;
   }
 
   // Create claims using the same path as manifest claims
-  return createClaimsFromManifest(candidateId, artifactId, artifactType, localClaims);
+  return createClaimsFromManifest(candidateId, artifactId, artifactType, normalizedClaims);
 }
 
 // ── Internal: AI-backed claim creation ──────────────────────────────────────

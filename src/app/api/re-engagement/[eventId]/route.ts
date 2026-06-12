@@ -19,12 +19,26 @@ export async function PATCH(
       );
     }
 
-    const event = await prisma.reEngagementEvent.update({
-      where: { id: eventId },
-      data: {
-        status,
-        reviewedAt: status === "pending" ? null : new Date(),
-      },
+    const event = await prisma.$transaction(async (tx) => {
+      const updatedEvent = await tx.reEngagementEvent.update({
+        where: { id: eventId },
+        data: {
+          status,
+          reviewedAt: status === "pending" ? null : new Date(),
+        },
+      });
+
+      if (status === "contacted") {
+        await tx.opportunityInteraction.updateMany({
+          where: {
+            roleBriefId: updatedEvent.roleBriefId,
+            candidateId: updatedEvent.candidateId,
+          },
+          data: { employerStatus: "contacted" },
+        });
+      }
+
+      return updatedEvent;
     });
 
     return NextResponse.json({ event });

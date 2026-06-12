@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+function parseApplicationAnswers(value: string | null) {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 // =============================================================================
 // GET /api/roles/[roleId] — Get a single role brief with full details
 // =============================================================================
@@ -78,6 +90,9 @@ export async function GET(
           employerStatus: i.employerStatus,
           readinessScore: i.lastReadinessScore,
           gapCount: i.lastGapCount,
+          applicationNote: i.applicationNote,
+          applicationAnswers: parseApplicationAnswers(i.applicationAnswers),
+          appliedAt: i.appliedAt,
           updatedAt: i.updatedAt,
         })),
         matchScores: role.matchScores.map((ms) => ({

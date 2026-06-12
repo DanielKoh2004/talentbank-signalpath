@@ -59,6 +59,9 @@ interface InteractionData {
   employerStatus: string;
   readinessScore: number;
   gapCount: number;
+  applicationNote: string | null;
+  applicationAnswers: Record<string, unknown> | null;
+  appliedAt: string | null;
   updatedAt: string;
 }
 
@@ -98,7 +101,7 @@ interface RoleDetail {
   matchScores: MatchScoreData[];
 }
 
-type CandidateFilter = "interested" | "all" | "shortlisted";
+type CandidateFilter = "interested" | "applications" | "all" | "shortlisted";
 
 const WORK_MODE_LABELS: Record<string, string> = {
   remote: "Remote",
@@ -255,7 +258,10 @@ export default function RoleWorkspacePage({
   // Interaction stats
   const interactions = role.interactions ?? [];
   const interestedCandidates = interactions.filter(
-    (i) => i.candidateStatus === "interested"
+    (i) => i.candidateStatus === "interested" || i.candidateStatus === "applied"
+  );
+  const appliedCandidates = interactions.filter(
+    (i) => i.candidateStatus === "applied"
   );
   const shortlisted = interactions.filter(
     (i) => i.employerStatus === "shortlisted"
@@ -275,7 +281,9 @@ export default function RoleWorkspacePage({
   // Filter candidates
   const filteredInteractions = interactions.filter((i) => {
     if (candidateFilter === "interested")
-      return i.candidateStatus === "interested";
+      return i.candidateStatus === "interested" || i.candidateStatus === "applied";
+    if (candidateFilter === "applications")
+      return i.candidateStatus === "applied";
     if (candidateFilter === "shortlisted")
       return i.employerStatus === "shortlisted";
     return true;
@@ -404,6 +412,7 @@ export default function RoleWorkspacePage({
                     : "default"
                 }
                 className="gap-1.5"
+                data-help-id="employer-compute-scores"
               >
                 <Shield className="h-3.5 w-3.5" />
                 Compute Scores
@@ -414,11 +423,17 @@ export default function RoleWorkspacePage({
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <StatCard
-          label="Interested"
+          label="Interested/Applied"
           value={interestedCandidates.length.toString()}
           icon={Users}
+          color="indigo"
+        />
+        <StatCard
+          label="Applications"
+          value={appliedCandidates.length.toString()}
+          icon={Mail}
           color="indigo"
         />
         <StatCard
@@ -503,7 +518,7 @@ export default function RoleWorkspacePage({
         </div>
 
         {/* Right: Candidates */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4" data-help-id="employer-candidate-list">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
@@ -523,13 +538,25 @@ export default function RoleWorkspacePage({
           >
             <TabsList>
               <TabsTrigger value="interested" className="gap-1.5">
-                Interested
+                Interested / Applied
                 {interestedCandidates.length > 0 && (
                   <Badge
                     variant="secondary"
                     className="text-[10px] px-1.5 py-0 ml-0.5"
                   >
                     {interestedCandidates.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="applications" className="gap-1.5">
+                <Mail className="h-3 w-3" />
+                Applied
+                {appliedCandidates.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] px-1.5 py-0 ml-0.5"
+                  >
+                    {appliedCandidates.length}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -558,12 +585,16 @@ export default function RoleWorkspacePage({
               title={
                 candidateFilter === "interested"
                   ? "No interested candidates yet"
+                  : candidateFilter === "applications"
+                    ? "No applications yet"
                   : candidateFilter === "shortlisted"
                     ? "No shortlisted candidates yet"
                     : "No candidate interactions found"
               }
               description={
-                candidateFilter === "shortlisted"
+                candidateFilter === "applications"
+                  ? "Candidates who click Apply Now will appear here with their note and reason."
+                  : candidateFilter === "shortlisted"
                   ? "Review interested candidates first, then shortlist the strongest evidence-backed matches."
                   : "Refresh the workspace or ask a candidate persona to express interest from the marketplace."
               }
@@ -619,6 +650,11 @@ function parseMatrixPayload(matrixJson: string | null | undefined): MatrixPayloa
   }
 }
 
+function getWhyThisRole(applicationAnswers: Record<string, unknown> | null) {
+  const answer = applicationAnswers?.whyThisRole;
+  return typeof answer === "string" ? answer.trim() : "";
+}
+
 function CandidateRow({
   roleBriefId,
   interaction,
@@ -637,6 +673,9 @@ function CandidateRow({
   onChanged: () => Promise<void>;
 }) {
   const [isSnapshotting, setIsSnapshotting] = useState(false);
+  const [updatingEmployerStatus, setUpdatingEmployerStatus] = useState<string | null>(
+    null
+  );
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const readinessPercent = Math.round((interaction.readinessScore ?? 0) * 100);
@@ -662,6 +701,47 @@ function CandidateRow({
   const StatusIcon = statusConfig.icon;
   const matrixPayload = parseMatrixPayload(matchScore?.matrixJson);
   const matrixRows = matrixPayload?.evidenceMatrix ?? [];
+  const isApplied = interaction.candidateStatus === "applied";
+  const whyThisRole = getWhyThisRole(interaction.applicationAnswers);
+
+  const updateEmployerStatus = async (
+    employerStatus: "shortlisted" | "contacted" | "rejected",
+  ) => {
+    setUpdatingEmployerStatus(employerStatus);
+    setActionMessage(null);
+    setActionError(null);
+
+    try {
+      const res = await fetch(`/api/roles/${roleBriefId}/interest`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidateId: interaction.candidateId,
+          employerStatus,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Failed to update candidate status");
+      }
+
+      setActionMessage(
+        employerStatus === "shortlisted"
+          ? `${interaction.candidateName} is now shortlisted.`
+          : employerStatus === "contacted"
+            ? `${interaction.candidateName} is now marked contacted.`
+            : `${interaction.candidateName} is now marked not ready.`,
+      );
+      await onChanged();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Failed to update candidate status",
+      );
+    } finally {
+      setUpdatingEmployerStatus(null);
+    }
+  };
 
   const snapshotNotReady = async () => {
     const defaultReason =
@@ -674,6 +754,10 @@ function CandidateRow({
     );
 
     if (rejectionReason === null) return;
+    if (!rejectionReason.trim()) {
+      setActionError("Rejection reason is required.");
+      return;
+    }
 
     setIsSnapshotting(true);
     setActionMessage(null);
@@ -686,7 +770,7 @@ function CandidateRow({
         body: JSON.stringify({
           candidateId: interaction.candidateId,
           roleBriefId,
-          rejectionReason,
+          rejectionReason: rejectionReason.trim(),
         }),
       });
 
@@ -738,6 +822,12 @@ function CandidateRow({
                 {interaction.candidateName}
               </p>
               <div className="flex items-center gap-2 mt-0.5">
+                {isApplied && (
+                  <Badge className="bg-blue-100 px-1.5 py-0 text-[9px] text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300">
+                    <Mail className="mr-0.5 h-2.5 w-2.5" />
+                    Applied
+                  </Badge>
+                )}
                 <Badge
                   variant="secondary"
                   className={cn("text-[9px] px-1.5 py-0", statusConfig.color)}
@@ -793,6 +883,43 @@ function CandidateRow({
         {/* Expanded readiness detail */}
         {isExpanded && (
           <div className="border-t border-gray-100 dark:border-gray-800 p-4 bg-gray-50/50 dark:bg-gray-900/30">
+            {isApplied && (
+              <div
+                className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20"
+                data-help-id="employer-application-details"
+              >
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-blue-950 dark:text-blue-100">
+                    <Mail className="h-4 w-4" />
+                    Application submitted
+                  </h3>
+                  {interaction.appliedAt && (
+                    <span className="text-xs font-medium text-blue-700/70 dark:text-blue-200/70">
+                      {new Date(interaction.appliedAt).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg bg-white/70 p-3 dark:bg-slate-950/40">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700/70 dark:text-blue-200/70">
+                      Short note
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
+                      {interaction.applicationNote ?? "No note provided."}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white/70 p-3 dark:bg-slate-950/40">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-blue-700/70 dark:text-blue-200/70">
+                      Why this role
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-200">
+                      {whyThisRole || "No answer provided."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {matchScore && matrixRows.length > 0 ? (
               <div className="space-y-4">
                 <ScoreBreakdown
@@ -807,7 +934,9 @@ function CandidateRow({
                     evidenceQuality: matchScore.evidenceQuality,
                   }}
                 />
-                <EvidenceMatrix rows={matrixRows} />
+                <div data-help-id="employer-evidence-matrix">
+                  <EvidenceMatrix rows={matrixRows} />
+                </div>
                 <AIMemoPanel
                   memo={matchScore.aiMemo}
                   source={matrixPayload?.memoSource ?? "matrix_fallback"}
@@ -825,18 +954,64 @@ function CandidateRow({
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
-              <Button size="sm" variant="secondary" className="gap-1.5 h-7 text-xs">
-                <UserCheck className="h-3 w-3" />
-                Shortlist
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5 h-7 text-xs"
-              >
-                <Mail className="h-3 w-3" />
-                Contact
-              </Button>
+              {updatingEmployerStatus || interaction.employerStatus === "shortlisted" ? (
+                <DisabledTooltipButton
+                  size="sm"
+                  variant="secondary"
+                  className="gap-1.5 h-7 text-xs"
+                  disabledReason={
+                    updatingEmployerStatus
+                      ? "Candidate review status is being updated."
+                      : "This candidate is already shortlisted."
+                  }
+                >
+                  {updatingEmployerStatus === "shortlisted" ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <UserCheck className="h-3 w-3" />
+                  )}
+                  Shortlist
+                </DisabledTooltipButton>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-1.5 h-7 text-xs"
+                  onClick={() => updateEmployerStatus("shortlisted")}
+                >
+                  <UserCheck className="h-3 w-3" />
+                  Shortlist
+                </Button>
+              )}
+              {updatingEmployerStatus || interaction.employerStatus === "contacted" ? (
+                <DisabledTooltipButton
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                  disabledReason={
+                    updatingEmployerStatus
+                      ? "Candidate review status is being updated."
+                      : "This candidate is already marked contacted."
+                  }
+                >
+                  {updatingEmployerStatus === "contacted" ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Mail className="h-3 w-3" />
+                  )}
+                  Contact
+                </DisabledTooltipButton>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                  onClick={() => updateEmployerStatus("contacted")}
+                >
+                  <Mail className="h-3 w-3" />
+                  Contact
+                </Button>
+              )}
               {isSnapshotting ? (
                 <DisabledTooltipButton
                   size="sm"
